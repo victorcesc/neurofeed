@@ -30,5 +30,5 @@
 
 ## Security
 
-- Treat `TELEGRAM_BOT_TOKEN`, `OPENAI_API_KEY`, and feed URLs as sensitive.
+- Treat `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `LLM_API_KEY`, and feed URLs as sensitive.
 - Use placeholders in examples (`<token>`), never real credentials.
