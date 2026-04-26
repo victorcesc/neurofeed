@@ -48,7 +48,7 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 - Use `log/slog` with structured keys (`slog.Info("msg", "key", value)`).
 - Log levels: `Info` for high-level pipeline steps, `Debug` for verbose diagnostics, `Error` before exit.
 
-## Telegram and OpenAI
+## Telegram and LLM providers
 
 - Respect API rate limits; cap batch sizes and output tokens in configuration.
 - Telegram message length: plan splitting or continuation messages when the digest exceeds limits (see product spec in `neurofeed.md`).
@@ -64,3 +64,9 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 
 - `make fmt vet test` before pushing.
 - Consider `staticcheck` in CI when the project adds continuous integration.
+
+## Naming
+
+- Variable names must be descriptive and communicate intent clearly.
+- Never use one-letter or ambiguous variable names (for example: `v`, `x`, `tmp`).
+- Prefer explicit names such as `numbersVector`, `articleScores`, `requestTimeout`, or `telegramMessageBody`.
