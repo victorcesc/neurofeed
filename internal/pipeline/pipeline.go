@@ -35,25 +35,25 @@ func New(cfg config.Config, log *slog.Logger, fetcher ingest.FeedFetcher, summar
 	}
 }
 
-// Run executes one full cycle. Phase 0: stubs only; no outbound HTTP.
-func (p *Pipeline) Run(ctx context.Context) error {
-	articles, err := p.fetcher.Fetch(ctx)
+// Run executes one full cycle: fetch → summarize → notify.
+func (contentPipeline *Pipeline) Run(ctx context.Context) error {
+	articles, err := contentPipeline.fetcher.Fetch(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch: %w", err)
 	}
-	p.log.Info("ingest complete", "count", len(articles))
+	contentPipeline.log.Info("ingest complete", "count", len(articles))
 
-	summary, err := p.summarizer.Summarize(ctx, articles)
+	summary, err := contentPipeline.summarizer.Summarize(ctx, articles)
 	if err != nil {
 		return fmt.Errorf("summarize: %w", err)
 	}
 
 	if summary == "" {
-		p.log.Info("no summary to send (stub pipeline)")
+		contentPipeline.log.Info("nothing to send", "articles", len(articles))
 		return nil
 	}
 
-	if err := p.notifier.Notify(ctx, summary); err != nil {
+	if err := contentPipeline.notifier.Notify(ctx, summary); err != nil {
 		return fmt.Errorf("notify: %w", err)
 	}
 	return nil

@@ -9,7 +9,11 @@ func TestLoad_defaults(t *testing.T) {
 	t.Setenv("NEUROFEED_HTTP_TIMEOUT", "")
 	t.Setenv("NEUROFEED_HTTP_TIMEOUT_SECONDS", "")
 	t.Setenv("TELEGRAM_BOT_TOKEN", "")
-	t.Setenv("OPENAI_API_KEY", "")
+	t.Setenv("TELEGRAM_CHAT_ID", "")
+	t.Setenv("LLM_PROVIDER", "")
+	t.Setenv("LLM_MODEL", "")
+	t.Setenv("LLM_BASE_URL", "")
+	t.Setenv("LLM_API_KEY", "")
 	t.Setenv("RSS_FEED_URL", "")
 
 	cfg, err := Load()
@@ -71,14 +75,24 @@ func TestLoad_HTTPTimeoutSeconds_priority(t *testing.T) {
 
 func TestLoad_envPassthrough(t *testing.T) {
 	t.Setenv("TELEGRAM_BOT_TOKEN", "tok")
-	t.Setenv("OPENAI_API_KEY", "key")
+	t.Setenv("TELEGRAM_CHAT_ID", "12345")
+	t.Setenv("LLM_PROVIDER", "openai")
+	t.Setenv("LLM_MODEL", "gpt-4o-mini")
+	t.Setenv("LLM_BASE_URL", "https://api.openai.com/v1")
+	t.Setenv("LLM_API_KEY", "key")
 	t.Setenv("RSS_FEED_URL", "https://example.com/feed")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.TelegramBotToken != "tok" || cfg.OpenAIAPIKey != "key" || cfg.RSSFeedURL != "https://example.com/feed" {
+	if cfg.TelegramBotToken != "tok" ||
+		cfg.TelegramChatID != "12345" ||
+		cfg.LLMProvider != "openai" ||
+		cfg.LLMModel != "gpt-4o-mini" ||
+		cfg.LLMBaseURL != "https://api.openai.com/v1" ||
+		cfg.LLMAPIKey != "key" ||
+		cfg.RSSFeedURL != "https://example.com/feed" {
 		t.Fatalf("unexpected cfg %+v", cfg)
 	}
 }

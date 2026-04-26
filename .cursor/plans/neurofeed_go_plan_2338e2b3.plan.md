@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: phase-1-mvp
     content: Telegram send + single RSS feed + Article mapping + one-shot run
-    status: pending
+    status: completed
   - id: phase-2-7
     content: Iterate multi-source, scoring, OpenAI, formatting, profiles, retries/logging/cache per phase table
     status: pending
@@ -59,7 +59,7 @@ Suggested layout (to implement after plan approval, not in this planning step):
 - `internal/config/` — validated configuration (feeds, tokens, timeouts, model name)
 - `internal/ingest/` — RSS → `Article` (timeouts, user-agent, errors)
 - `internal/domain/` — `Article`, dedup key normalization, scoring
-- `internal/ai/` — OpenAI client, prompt templates from [neurofeed.md](neurofeed.md) (base + advanced)
+- `internal/ai/` — provider-agnostic LLM client(s), prompt templates from [neurofeed.md](neurofeed.md) (base + advanced)
 - `internal/notify/` — Telegram send, Markdown/HTML escaping per [Telegram Bot API](https://core.telegram.org/bots/api) rules
 - `internal/app/` or `internal/pipeline/` — orchestration: collect → dedup → score → top N → summarize → format → send
 
@@ -75,11 +75,11 @@ Phases below **merge** the roadmap in [neurofeed.md](neurofeed.md) with engineer
 |-------|------|----------|
 | **0 — Repo and quality baseline** | Runnable module, conventions locked | `go.mod`, minimal `main`, `.gitignore`, `RULES.md` / `SKILLS.md` / `AGENTS.md` (this plan’s deliverables), optional `Makefile` or `task` for `fmt`, `vet`, `test`. No feature code without `context.Context` on I/O boundaries. |
 | **1 — MVP** | One path end-to-end | Telegram bot created; send one test message; fetch **one** RSS URL with gofeed; map to `Article`; send title + link to Telegram. Config via env (bot token, feed URL). |
-| **2 — Multiple sources** | Scale ingestion | Multiple feeds from config (YAML/JSON or env list); normalize to `Article`; dedup by normalized title (lower, strip punctuation; optional hash later). |
-| **3 — Smart filter** | Relevance without LLM | Positive/negative keywords, scoring, sort by score, cap top N; optional source weights and recency bonus as in the doc. |
+| **2 — Multiple sources** | Scale ingestion | Multiple feeds from config (YAML/JSON or env list) **each with a source tier** (`primary` / `expert` / `news` / `community` per [neurofeed.md](neurofeed.md)); map to `Article` including `SourceTier`; dedup by normalized title (lower, strip punctuation; optional hash later). |
+| **3 — Smart filter** | Relevance without LLM | Positive/negative keywords, scoring **plus tier weights** (`SourceTier.ScoreWeight()` defaults; **overridable per profile/config** per [neurofeed.md](neurofeed.md)), sort by score, cap top N; optional per-feed bonus and recency bonus as in the doc. |
 | **4 — AI integration** | Summaries | OpenAI HTTP calls with timeouts; prompt from spec (structured output); validate length/clarity with simple heuristics or JSON mode if you standardize output. |
 | **5 — Message UX** | Readable digest | Categories, emojis, Markdown (or HTML) with Telegram-safe formatting; clickable links. |
-| **6 — Personalization** | Multi-audience | Profiles (e.g. you / partner), per-profile keywords and feed subsets. |
+| **6 — Personalization** | Multi-audience | Profiles; **up to 5 interest topics** per profile (Telegram UX: **catalog + search** as primary, optional limited free-text per [neurofeed.md](neurofeed.md)); map interests → keyword/synonym lists; **tier weight overrides**; per-profile feed subsets. |
 | **7 — Robustness** | Production habits | Retries with backoff for transient HTTP failures, structured logging (`log/slog`), request timeouts everywhere, simple TTL cache if needed to avoid duplicate API work. |
 
 **Go-specific emphasis across phases**
@@ -100,7 +100,7 @@ Single source of truth for **how we write Go in this repo**:
 - Module layout (`cmd/` vs `internal/`), naming, and when to add a new package.
 - Error handling, logging (`slog`), configuration (env + optional file), secrets (never committed).
 - HTTP: timeouts, default transport considerations, retries policy (where and max attempts).
-- Telegram and OpenAI: rate limits, message length split strategy if digest exceeds limits.
+- Telegram and LLM providers: rate limits, message length split strategy if digest exceeds limits.
 - Testing expectations (what must be tested per change type), `go vet` / `staticcheck` if adopted.
 - Dependencies: prefer stdlib + minimal deps; justify new modules.
 

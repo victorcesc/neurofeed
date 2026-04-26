@@ -9,5 +9,6 @@ type Article struct {
 	Link        string
 	Description string
 	Source      string
+	SourceTier  SourceTier
 	Published   time.Time
 }
