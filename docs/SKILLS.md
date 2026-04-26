@@ -1,6 +1,8 @@
 # Neurofeed — workflows and procedures
 
-Short index for humans and coding agents. Coding standards live in [RULES.md](RULES.md).
+[Index of all docs](README.md). Short guide for humans and coding agents. Coding standards live in [RULES.md](RULES.md).
+
+Step-by-step local run (prerequisites, `.env`, getting `TELEGRAM_CHAT_ID`): [HOW_TO_RUN.md](HOW_TO_RUN.md).
 
 ## Local run (phase 0+)
 
@@ -28,7 +30,7 @@ make all    # fmt, vet, test, build
 
 ## Environment
 
-See [.env.example](.env.example). Example:
+See [.env.example](../.env.example). Example:
 
 ```bash
 export TELEGRAM_BOT_TOKEN="your-token"
@@ -70,7 +72,7 @@ Prompts from the product brief live alongside the LLM client abstraction under `
 
 ## Definition of done (by phase)
 
-Aligns with [neurofeed.md](neurofeed.md) and `.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md`.
+Aligns with [neurofeed.md](neurofeed.md) and [the development plan](../.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md).
 
 - **Phase 0**: `make all` passes; binary runs; stubs respect `context`.
 - **Phase 1**: one RSS → Telegram message path works with env config.

@@ -1,9 +1,9 @@
 ---
 name: Neurofeed Go Plan
-overview: Turn [neurofeed.md](neurofeed.md) into a phased delivery plan for a Go-based RSS→filter→LLM→Telegram pipeline, and add three repo-root guides—RULES.md, SKILLS.md, AGENTS.md—that encode Go idioms, agent behavior, and repeatable workflows so development stays consistent and idiomatic.
+overview: Turn [docs/neurofeed.md](../../docs/neurofeed.md) into a phased delivery plan for a Go-based RSS→filter→LLM→Telegram pipeline, with handbooks under docs/ (RULES, SKILLS) plus AGENTS.md at repo root for agent entry.
 todos:
   - id: docs-rules-skills-agents
-    content: Author RULES.md, SKILLS.md, AGENTS.md at repo root (Go idioms, workflows, agent boundaries) aligned with neurofeed.md
+    content: Author docs/RULES.md, docs/SKILLS.md, docs/HOW_TO_RUN.md, docs/neurofeed.md; AGENTS.md at repo root (Go idioms, workflows, agent boundaries)
     status: completed
   - id: phase-0-scaffold
     content: Add go.mod, cmd/neurofeed, internal/* skeleton, config from env, context+timeouts on I/O stubs
@@ -21,7 +21,7 @@ isProject: false
 
 ## Context
 
-The product vision and technical stack are defined in [neurofeed.md](neurofeed.md): Go, RSS via [gofeed](https://github.com/mmcdole/gofeed), scheduling (cron or [gocron](https://github.com/go-co-op/gocron)), `net/http` for APIs, OpenAI for summaries, Telegram Bot API for delivery. Success is measured by signal quality (filter + summarize), not raw volume.
+The product vision and technical stack are defined in [docs/neurofeed.md](../../docs/neurofeed.md): Go, RSS via [gofeed](https://github.com/mmcdole/gofeed), scheduling (cron or [gocron](https://github.com/go-co-op/gocron)), `net/http` for APIs, OpenAI for summaries, Telegram Bot API for delivery. Success is measured by signal quality (filter + summarize), not raw volume.
 
 ## Target architecture (packages)
 
@@ -59,7 +59,7 @@ Suggested layout (to implement after plan approval, not in this planning step):
 - `internal/config/` — validated configuration (feeds, tokens, timeouts, model name)
 - `internal/ingest/` — RSS → `Article` (timeouts, user-agent, errors)
 - `internal/domain/` — `Article`, dedup key normalization, scoring
-- `internal/ai/` — provider-agnostic LLM client(s), prompt templates from [neurofeed.md](neurofeed.md) (base + advanced)
+- `internal/ai/` — provider-agnostic LLM client(s), prompt templates from [docs/neurofeed.md](../../docs/neurofeed.md) (base + advanced)
 - `internal/notify/` — Telegram send, Markdown/HTML escaping per [Telegram Bot API](https://core.telegram.org/bots/api) rules
 - `internal/app/` or `internal/pipeline/` — orchestration: collect → dedup → score → top N → summarize → format → send
 
@@ -69,17 +69,17 @@ Use **interfaces at boundaries** (e.g. `FeedFetcher`, `Summarizer`, `Notifier`) 
 
 ## Development phases
 
-Phases below **merge** the roadmap in [neurofeed.md](neurofeed.md) with engineering work (config, structure, quality) so “maximum Go” applies from day one.
+Phases below **merge** the roadmap in [docs/neurofeed.md](../../docs/neurofeed.md) with engineering work (config, structure, quality) so “maximum Go” applies from day one.
 
 | Phase | Goal | Outcomes |
 |-------|------|----------|
-| **0 — Repo and quality baseline** | Runnable module, conventions locked | `go.mod`, minimal `main`, `.gitignore`, `RULES.md` / `SKILLS.md` / `AGENTS.md` (this plan’s deliverables), optional `Makefile` or `task` for `fmt`, `vet`, `test`. No feature code without `context.Context` on I/O boundaries. |
+| **0 — Repo and quality baseline** | Runnable module, conventions locked | `go.mod`, minimal `main`, `.gitignore`, `docs/RULES.md` / `docs/SKILLS.md` / `AGENTS.md` (this plan’s deliverables), optional `Makefile` or `task` for `fmt`, `vet`, `test`. No feature code without `context.Context` on I/O boundaries. |
 | **1 — MVP** | One path end-to-end | Telegram bot created; send one test message; fetch **one** RSS URL with gofeed; map to `Article`; send title + link to Telegram. Config via env (bot token, feed URL). |
-| **2 — Multiple sources** | Scale ingestion | Multiple feeds from config (YAML/JSON or env list) **each with a source tier** (`primary` / `expert` / `news` / `community` per [neurofeed.md](neurofeed.md)); map to `Article` including `SourceTier`; dedup by normalized title (lower, strip punctuation; optional hash later). |
-| **3 — Smart filter** | Relevance without LLM | Positive/negative keywords, scoring **plus tier weights** (`SourceTier.ScoreWeight()` defaults; **overridable per profile/config** per [neurofeed.md](neurofeed.md)), sort by score, cap top N; optional per-feed bonus and recency bonus as in the doc. |
+| **2 — Multiple sources** | Scale ingestion | Multiple feeds from config (YAML/JSON or env list) **each with a source tier** (`primary` / `expert` / `news` / `community` per [docs/neurofeed.md](../../docs/neurofeed.md)); map to `Article` including `SourceTier`; dedup by normalized title (lower, strip punctuation; optional hash later). |
+| **3 — Smart filter** | Relevance without LLM | Positive/negative keywords, scoring **plus tier weights** (`SourceTier.ScoreWeight()` defaults; **overridable per profile/config** per [docs/neurofeed.md](../../docs/neurofeed.md)), sort by score, cap top N; optional per-feed bonus and recency bonus as in the doc. |
 | **4 — AI integration** | Summaries | OpenAI HTTP calls with timeouts; prompt from spec (structured output); validate length/clarity with simple heuristics or JSON mode if you standardize output. |
 | **5 — Message UX** | Readable digest | Categories, emojis, Markdown (or HTML) with Telegram-safe formatting; clickable links. |
-| **6 — Personalization** | Multi-audience | Profiles; **up to 5 interest topics** per profile (Telegram UX: **catalog + search** as primary, optional limited free-text per [neurofeed.md](neurofeed.md)); map interests → keyword/synonym lists; **tier weight overrides**; per-profile feed subsets. |
+| **6 — Personalization** | Multi-audience | Profiles; **up to 5 interest topics** per profile (Telegram UX: **catalog + search** as primary, optional limited free-text per [docs/neurofeed.md](../../docs/neurofeed.md)); map interests → keyword/synonym lists; **tier weight overrides**; per-profile feed subsets. |
 | **7 — Robustness** | Production habits | Retries with backoff for transient HTTP failures, structured logging (`log/slog`), request timeouts everywhere, simple TTL cache if needed to avoid duplicate API work. |
 
 **Go-specific emphasis across phases**
@@ -93,9 +93,9 @@ Phases below **merge** the roadmap in [neurofeed.md](neurofeed.md) with engineer
 
 ---
 
-## RULES.md (planned contents)
+## docs/RULES.md (planned contents)
 
-Single source of truth for **how we write Go in this repo**:
+Single source of truth for **how we write Go in this repo** (file: [docs/RULES.md](../../docs/RULES.md)):
 
 - Module layout (`cmd/` vs `internal/`), naming, and when to add a new package.
 - Error handling, logging (`slog`), configuration (env + optional file), secrets (never committed).
@@ -104,22 +104,22 @@ Single source of truth for **how we write Go in this repo**:
 - Testing expectations (what must be tested per change type), `go vet` / `staticcheck` if adopted.
 - Dependencies: prefer stdlib + minimal deps; justify new modules.
 
-Optional later: mirror critical bullets into [`.cursor/rules/*.mdc`](https://cursor.com/docs) for editor-native hints; **RULES.md** remains the canonical human-readable contract.
+Optional later: mirror critical bullets into [`.cursor/rules/*.mdc`](https://cursor.com/docs) for editor-native hints; **docs/RULES.md** remains the canonical human-readable contract.
 
 ---
 
-## SKILLS.md (planned contents)
+## docs/SKILLS.md (planned contents)
 
-**Index of repeatable workflows** for humans and agents (not a dump of every Cursor skill globally):
+**Index of repeatable workflows** for humans and agents (file: [docs/SKILLS.md](../../docs/SKILLS.md)):
 
 - How to add a new RSS source and redeploy/run locally.
 - How to tune keywords and top-N without code changes (if config-driven).
 - How to run the daily job manually vs on schedule.
 - How to rotate Telegram/OpenAI tokens safely.
 - Pointers to prompt templates location and how to A/B base vs advanced prompt.
-- “Definition of done” checklist per phase (maps to success criteria in [neurofeed.md](neurofeed.md)).
+- “Definition of done” checklist per phase (maps to success criteria in [docs/neurofeed.md](../../docs/neurofeed.md)).
 
-If you later add real [Cursor Agent Skills](https://cursor.com/docs) under `.cursor/skills/`, **SKILLS.md** should link to those paths and one-line descriptions.
+If you later add real [Cursor Agent Skills](https://cursor.com/docs) under `.cursor/skills/`, **docs/SKILLS.md** should link to those paths and one-line descriptions.
 
 ---
 
@@ -127,20 +127,20 @@ If you later add real [Cursor Agent Skills](https://cursor.com/docs) under `.cur
 
 **Instructions for AI coding agents** working in this repository:
 
-- Read **RULES.md** first; follow **SKILLS.md** for operational steps.
+- Read **docs/RULES.md** first; follow **docs/SKILLS.md** for operational steps (see [AGENTS.md](../../AGENTS.md) at repo root).
 - Scope: prefer minimal diffs; match existing patterns; do not add unsolicited docs beyond what the team requests.
 - Language: Go version target (state explicit version in AGENTS.md once chosen, e.g. 1.22+).
 - Testing: run/format commands the project standardizes on.
 - Security: never echo secrets; use env placeholders in examples.
 - When to propose new packages vs extending an existing one (tie to architecture diagram above).
 
-This complements Cursor’s native rules: **AGENTS.md** is repo-level “agent README”; **RULES.md** is coding law; **SKILLS.md** is procedure.
+This complements Cursor’s native rules: **AGENTS.md** is repo-level “agent README”; **docs/RULES.md** is coding law; **docs/SKILLS.md** is procedure.
 
 ---
 
 ## Implementation order (after you approve)
 
-1. Add **RULES.md**, **SKILLS.md**, **AGENTS.md** at repo root with the sections above, tuned to your chosen Go version and scheduler (cron binary vs gocron in-process).
+1. Add **docs/RULES.md**, **docs/SKILLS.md**, **AGENTS.md** (repo root) with the sections above, tuned to your chosen Go version and scheduler (cron binary vs gocron in-process).
 2. Scaffold **Phase 0** (`go.mod`, `cmd/neurofeed`, `internal/config`, minimal pipeline stub).
 3. Execute phases **1–7** sequentially, merging “robustness” practices (timeouts, context) from phase 0 onward rather than deferring all to phase 7.
 
@@ -150,6 +150,6 @@ This complements Cursor’s native rules: **AGENTS.md** is repo-level “agent R
 
 - **Telegram message length**: plan chunking or “continued” messages early in phase 5.
 - **OpenAI cost**: cap articles per run and token limits in phase 4 config.
-- **Scheduler**: systemd/cron wrapping a binary vs embedded gocron affects deployment docs in **SKILLS.md**—call out both options in SKILLS.md until you pick one.
+- **Scheduler**: systemd/cron wrapping a binary vs embedded gocron affects deployment docs in **docs/SKILLS.md**—call out both options there until you pick one.
 
-No code or file writes until you confirm this plan; after confirmation, the first concrete edits should be the three markdown files plus Phase 0 scaffold.
+After plan approval, the first concrete edits were the handbooks under **docs/** plus **AGENTS.md** and Phase 0 scaffold.

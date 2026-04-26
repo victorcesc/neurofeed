@@ -1,11 +1,13 @@
 # How to run Neurofeed
 
-This guide covers running the Neurofeed CLI locally. Product behavior and phases are described in [neurofeed.md](neurofeed.md); engineering conventions are in [RULES.md](RULES.md).
+This guide covers running the Neurofeed CLI locally in detail. For a compact command and env checklist, use [SKILLS.md](SKILLS.md). AI coding agents: start with [AGENTS.md](../AGENTS.md).
+
+Product behavior and prompts are in [neurofeed.md](neurofeed.md). Phased delivery and checklists are in [the Cursor plan](../.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md). Engineering conventions are in [RULES.md](RULES.md).
 
 ## Prerequisites
 
-- **Go**: at least the version declared in [go.mod](go.mod) (currently Go 1.23). Use a supported stable Go release on your machine.
-- **GNU Make** (optional but recommended): the [Makefile](Makefile) wraps common commands.
+- **Go**: at least the version declared in [go.mod](../go.mod) (currently Go 1.23). Use a supported stable Go release on your machine.
+- **GNU Make** (optional but recommended): the [Makefile](../Makefile) wraps common commands.
 
 ## Get the code and dependencies
 
@@ -18,7 +20,7 @@ go mod download
 
 ## Environment variables
 
-Configuration is read from the process environment. See [.env.example](.env.example) for all variables.
+Configuration is read from the process environment. See [.env.example](../.env.example) for all variables.
 
 1. Copy the example file (do not commit a real `.env`):
 

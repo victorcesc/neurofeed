@@ -2,9 +2,13 @@
 
 ## Before writing code
 
-1. Read [RULES.md](RULES.md) for layout, errors, context, HTTP, and testing expectations.
-2. Read [SKILLS.md](SKILLS.md) for run commands and env vars.
-3. Read [neurofeed.md](neurofeed.md) for product behavior and prompts.
+Handbooks live under [docs/](docs/); read in this order:
+
+1. [docs/RULES.md](docs/RULES.md) — layout, errors, context, HTTP, and testing expectations.
+2. [docs/SKILLS.md](docs/SKILLS.md) — run commands, quality targets, and env var index.
+3. [docs/neurofeed.md](docs/neurofeed.md) — product behavior and prompts.
+
+First-time local setup (copy `.env`, load it, Telegram `chat_id`): [docs/HOW_TO_RUN.md](docs/HOW_TO_RUN.md).
 
 ## Language and toolchain
 

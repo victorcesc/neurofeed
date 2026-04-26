@@ -40,7 +40,7 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 
 ## Configuration and secrets
 
-- Read secrets from the environment (see `.env.example`). Never commit tokens or API keys.
+- Read secrets from the environment (see [`.env.example`](../.env.example)). Never commit tokens or API keys.
 - Validate on startup; fail fast with clear messages.
 
 ## Logging
@@ -51,7 +51,7 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 ## Telegram and LLM providers
 
 - Respect API rate limits; cap batch sizes and output tokens in configuration.
-- Telegram message length: plan splitting or continuation messages when the digest exceeds limits (see product spec in `neurofeed.md`).
+- Telegram message length: plan splitting or continuation messages when the digest exceeds limits (see product spec in [neurofeed.md](neurofeed.md)).
 - Escape or select parse mode carefully for Markdown/HTML.
 
 ## Testing
