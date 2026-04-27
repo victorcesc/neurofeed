@@ -64,9 +64,9 @@ Optional:
 
 Document the chosen approach here once the project picks one.
 
-## Personalization and onboarding (phase 6)
+## Personalization and onboarding (phase 5)
 
-Product detail lives in [neurofeed.md](neurofeed.md) (Fase 6 + section *Descoberta de fontes por tema*). Summary for implementers:
+Product detail lives in [neurofeed.md](neurofeed.md) (Fase 5 + section *Descoberta de fontes por tema*). Summary for implementers:
 
 - **LLM + RAG** (catalog of known feeds) runs **only at onboarding**, when the user confirms their subjects (up to 5). It suggests the **best 3 RSS URLs per subject**; each candidate is validated before save.
 - **After onboarding**, the digest pipeline uses **those persisted URLs** only — not a fresh LLM+RAG pick each run.
@@ -74,9 +74,9 @@ Product detail lives in [neurofeed.md](neurofeed.md) (Fase 6 + section *Descober
 
 Until profiles exist, global `RSS_FEED_URL` / `NEUROFEED_RSS_FEEDS` remain the MVP way to configure feeds (see *Adding an RSS source* above).
 
-## Prompt templates (phase 4)
+## Prompt templates (phase 3.2)
 
-Prompts from the product brief live alongside the LLM client abstraction under `internal/ai/` (to be added). To A/B prompts, use configuration to select template name or file path.
+Phase **3.1** adds the OpenAI HTTP client and env-backed settings; **3.2** adds digest prompts from the product brief alongside that client under `internal/ai/`. To A/B prompts, use configuration to select template name or file path.
 
 ## Rotating secrets
 

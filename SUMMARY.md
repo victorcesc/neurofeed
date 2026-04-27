@@ -26,11 +26,12 @@ High-level status of roadmap phases ([product spec](docs/neurofeed.md), [enginee
 
 | Phase | Focus |
 |-------|--------|
-| **3** | Keyword positive/negative scoring, tier weights, sort, top N |
-| **4** | OpenAI (or other) summarization with timeouts and prompts |
-| **5** | Telegram message UX: categories, emojis, Markdown, safe links |
-| **6** | Profiles, interest topics, tier overrides, feed subsets |
-| **7** | Retries/backoff, structured logging polish, caches, hardening |
+| **3.1** | OpenAI HTTP client, env config (`LLM_API_KEY`, model, timeouts), minimal completion to validate I/O |
+| **3.2** | Digest prompts from spec, article batch → request, structured / parseable model output |
+| **3.3** | Token/article caps, output validation, wire real `Summarizer` in pipeline + `httptest` coverage |
+| **4** | Telegram message UX: categories, emojis, Markdown, safe links |
+| **5** | Profiles, interest topics, tier overrides, feed subsets |
+| **6** | Retries/backoff, structured logging polish, caches, hardening |
 
 ---
 

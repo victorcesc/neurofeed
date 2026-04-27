@@ -6,7 +6,7 @@ Canonical conventions for this repository. Prefer these over ad-hoc style.
 
 - `cmd/neurofeed/` — entrypoint only: wiring, signals, exit codes.
 - `internal/config/` — environment-based configuration, validation, defaults.
-- `internal/domain/` — core types (`Article`, etc.) and pure logic (dedup keys, scoring).
+- `internal/domain/` — core types (`Article`, etc.) and pure logic (dedup keys, source tiers).
 - `internal/ingest/` — RSS and other fetchers; HTTP clients with timeouts.
 - `internal/ai/` — LLM clients and prompt assembly.
 - `internal/notify/` — Telegram and other sinks.
@@ -36,7 +36,7 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 
 - Construct `http.Client` with explicit `Timeout` or use `http.NewRequestWithContext` with a derived context deadline.
 - Set a sensible `User-Agent` for RSS fetches (identify the bot responsibly).
-- Retries (phase 7): bounded count, exponential backoff, only for idempotent GET and clear transient status codes.
+- Retries (phase 6): bounded count, exponential backoff, only for idempotent GET and clear transient status codes.
 
 ## Configuration and secrets
 
@@ -56,9 +56,9 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 
 ## Testing
 
-- Table-driven tests for pure functions (scoring, dedup, formatting).
+- Table-driven tests for pure functions (dedup, tier parsing, formatting).
 - Use `net/http/httptest` for HTTP-dependent clients.
-- Inject `time.Time` or a small clock interface for recency scoring.
+- Inject `time.Time` or a small clock interface when behavior depends on wall time (e.g. future recency scoring).
 
 ## Formatting and static analysis
 
