@@ -82,8 +82,10 @@ Telegram Bot
 
 * [ ] Perfis (você / namorada)
 * [ ] **Interesses no Telegram**: até **5** temas por perfil (ex.: AI, tech, futebol, NBA, bitcoin) — ver *Interesses: lista pronta vs texto livre* abaixo
+* [ ] **Cooldown de alteração de temas**: após confirmar os temas, o utilizador **só pode voltar a mudar os temas após 24 horas desde essa confirmação** (regra de produto; implementar com `confirmed_at` no perfil ou equivalente)
 * [ ] Mapear cada interesse → lista de **keywords / sinônimos** usados no score (e opcionalmente no prompt da IA)
-* [ ] Ao confirmar os 5 temas, fazer chamada na API de IA com **RAG de catálogo de fontes** para sugerir **3 melhores feeds RSS por tema**
+* [ ] **No onboarding** (quando o utilizador confirma os temas): chamada na API de IA com **RAG de catálogo de fontes** para sugerir **3 melhores feeds RSS por tema** — **não** repetir este passo em cada execução do digest diário
+* [ ] **Persistir** as URLs dos feeds aprovados no perfil; o pipeline diário **só lê estas URLs guardadas** (variáveis de ambiente globais ficam para MVP, defaults ou deploy sem perfis)
 * [ ] Validar operacionalidade de cada feed sugerido (`HTTP 200`, parse RSS ok, itens recentes) antes de salvar no perfil
 * [ ] **Pesos dos tiers** por perfil ou global (override dos defaults do `domain`)
 * [ ] Filtragem personalizada
@@ -215,7 +217,11 @@ func score(article Article) int {
 
 ### Descoberta de fontes por tema (IA + RAG)
 
-Quando o utilizador finalizar a seleção de até **5 temas**, o sistema executa um passo de descoberta assistida:
+**Quando corre:** **Apenas no onboarding** — depois de o utilizador confirmar até **5 temas** (e respeitando o **cooldown de 24 horas desde a última confirmação** antes de poder mudar temas outra vez; ver Fase 6). O digest diário **não** invoca LLM+RAG para escolher URLs; usa as feeds **já guardadas** no perfil.
+
+**Depois do onboarding:** o utilizador **mantém** as URLs validadas enquanto não mudar os temas; **nova mudança de temas** só é permitida quando tiverem passado **24 horas** desde o `confirmed_at` da última confirmação (ou via futura funcionalidade explícita “atualizar fontes”).
+
+Quando o utilizador finalizar a seleção de temas, o sistema executa um passo de descoberta assistida:
 
 1. Para cada tema, faz **1 chamada na API de IA** com contexto RAG (catálogo interno de fontes já conhecidas e seus metadados: idioma, categoria, país, qualidade histórica e URL do feed).
 2. A IA devolve **top 3 fontes RSS** para cada tema, com justificativa curta.
@@ -225,7 +231,7 @@ Quando o utilizador finalizar a seleção de até **5 temas**, o sistema executa
    - possui itens recentes (janela configurável, ex.: últimos 7 dias).
 4. Só feeds aprovados entram no perfil; falhas voltam para fallback (fontes default por tema) e log de observabilidade.
 
-Objetivo: garantir que a personalização não depende apenas de "nome bonito de fonte", mas de feeds realmente operacionais para o pipeline diário.
+Objetivo: garantir que a personalização não depende apenas de "nome bonito de fonte", mas de feeds realmente operacionais para o pipeline diário — e que o custo e a variabilidade do LLM+RAG ficam **no momento de configuração do perfil**, não em cada corrida agendada.
 
 ---
 
