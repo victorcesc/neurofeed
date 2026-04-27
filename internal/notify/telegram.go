@@ -33,7 +33,7 @@ type telegramAPIResponse struct {
 	Description string `json:"description"`
 }
 
-// Notify implements Notifier.
+// Notify implements Notifier: validates token/chat/client, truncates to Telegram limits, POSTs JSON to sendMessage.
 func (notifier *TelegramNotifier) Notify(ctx context.Context, message string) error {
 	if err := ctx.Err(); err != nil {
 		return err

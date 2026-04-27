@@ -5,7 +5,9 @@ import "testing"
 func TestValidatePhase1(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		err := ValidatePhase1(Config{
-			RSSFeedURL:       "https://example.com/feed.xml",
+			RSSFeeds: []RSSFeedEntry{
+				{URL: "https://example.com/feed.xml", Tier: "news"},
+			},
 			TelegramBotToken: "t",
 			TelegramChatID:   "1",
 		})

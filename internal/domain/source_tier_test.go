@@ -20,3 +20,39 @@ func TestSourceTier_ScoreWeight(t *testing.T) {
 		}
 	}
 }
+
+func TestParseSourceTier(t *testing.T) {
+	tests := []struct {
+		input string
+		want  SourceTier
+	}{
+		{"", SourceTierNews},
+		{"  ", SourceTierNews},
+		{"news", SourceTierNews},
+		{"NEWS", SourceTierNews},
+		{"primary", SourceTierPrimary},
+		{"expert", SourceTierExpert},
+		{"community", SourceTierCommunity},
+	}
+	for _, testCase := range tests {
+		got, err := ParseSourceTier(testCase.input)
+		if err != nil {
+			t.Fatalf("ParseSourceTier(%q): %v", testCase.input, err)
+		}
+		if got != testCase.want {
+			t.Fatalf("ParseSourceTier(%q) = %v, want %v", testCase.input, got, testCase.want)
+		}
+	}
+	if _, err := ParseSourceTier("unknown-tier"); err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestSourceTier_String(t *testing.T) {
+	if got, want := SourceTierPrimary.String(), "primary"; got != want {
+		t.Fatalf("String() = %q, want %q", got, want)
+	}
+	if got := SourceTier(42).String(); got == "" || got == "primary" {
+		t.Fatalf("unexpected String for unknown: %q", got)
+	}
+}

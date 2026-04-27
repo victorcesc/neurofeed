@@ -13,7 +13,7 @@ const headlineSummarizerMaxItems = 40
 // HeadlineSummarizer builds a plain-text digest of article titles and links (Phase 1 MVP; no LLM).
 type HeadlineSummarizer struct{}
 
-// Summarize implements Summarizer.
+// Summarize implements Summarizer. Pure string building (no HTTP); caller logs pipeline steps around this call.
 func (HeadlineSummarizer) Summarize(ctx context.Context, articles []domain.Article) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
@@ -23,8 +23,10 @@ func (HeadlineSummarizer) Summarize(ctx context.Context, articles []domain.Artic
 	}
 
 	// limit := len(articles)
+	// if limit > headlineSummarizerMaxItems {
+	// 	limit = headlineSummarizerMaxItems
+	// }
 	limit := min(len(articles), headlineSummarizerMaxItems)
-
 
 	var builder strings.Builder
 	for index := range limit {
