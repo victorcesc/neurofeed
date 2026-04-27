@@ -1,4 +1,4 @@
-// Package domain holds core types and pure logic for articles, deduplication, and scoring.
+// Package domain holds core types and pure logic for articles, deduplication, and source tiers.
 package domain
 
 import "time"

@@ -31,7 +31,7 @@ const (
 	DefaultTierWeightCommunity = -1
 )
 
-// ScoreWeight returns the default bonus (or malus) for this tier in keyword-based scoring (Phase 3).
+// ScoreWeight returns the default bonus (or malus) for this tier when relevance scoring exists (planned product spec).
 func (sourceTier SourceTier) ScoreWeight() int {
 	switch sourceTier {
 	case SourceTierPrimary:
