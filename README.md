@@ -2,11 +2,13 @@
 
 Neurofeed ingests RSS feeds, filters and ranks articles, optionally summarizes them with an LLM, and delivers a digest to Telegram. The service is written in Go with a small internal pipeline (`ingest` → `domain` → `ai` → `notify`).
 
+Phase checklist (what shipped vs next): **[SUMMARY.md](SUMMARY.md)**.
+
 ## Development status
 
-**Phases 0–1 are done** (repo scaffold, quality baseline, single RSS feed → Telegram digest). The runnable path matches **Phase 1** in the roadmap; a successful run logs `neurofeed phase 1 run OK`.
+**Phases 0–2 are done** (scaffold, single or multi RSS with per-feed **tiers**, title dedup, digest → Telegram). A successful run logs `neurofeed run OK`.
 
-**Phases 2–7 are not done yet** (multi-source feeds, keyword scoring, richer LLM formatting, profiles, robustness). See the phase table in [`.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md`](.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md).
+**Phases 3–7 are not done yet** (keyword scoring, LLM summaries, richer Telegram formatting, profiles, retries/logging/cache). See the phase table in [`.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md`](.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md).
 
 ## Run locally
 

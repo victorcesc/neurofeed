@@ -52,10 +52,10 @@ Telegram Bot
 
 ### Fase 2 — Múltiplas fontes
 
-* [ ] Adicionar múltiplos RSS feeds
-* [ ] Cada feed na config com **tier** (`primary`, `expert`, `news`, `community`); ingest preenche `Article.SourceTier`
-* [ ] Normalizar estrutura dos dados
-* [ ] Deduplicação básica (por título)
+* [x] Adicionar múltiplos RSS feeds
+* [x] Cada feed na config com **tier** (`primary`, `expert`, `news`, `community`); ingest preenche `Article.SourceTier`
+* [x] Normalizar estrutura dos dados
+* [x] Deduplicação básica (por título)
 
 ### Fase 3 — Filtro inteligente
 

@@ -22,7 +22,7 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 
 ## Context and I/O
 
-- Every function that performs or may perform network I/O must accept `context.Context` as the first parameter after `ctx` naming convention.
+- Every function that performs or may perform network I/O must accept `context.Context` as its **first parameter**, conventionally named `ctx`.
 - Use `context.WithTimeout` for single operations; respect `ctx.Err()` in long loops.
 - Do not use blank imports or `_` to discard errors from I/O.
 
@@ -67,6 +67,7 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 
 ## Naming
 
-- Variable names must be descriptive and communicate intent clearly.
-- Never use one-letter or ambiguous variable names (for example: `v`, `x`, `tmp`).
-- Prefer explicit names such as `numbersVector`, `articleScores`, `requestTimeout`, or `telegramMessageBody`.
+- Variable names must be descriptive and communicate intent clearly in their scope.
+- Avoid **single-letter** names and vague placeholders (`v`, `x`, `tmp`, `n` as “some number”) except where Go convention is universal and scope is tiny: `ctx` for `context.Context`, `err` for errors, `i`/`j`/`k` in short index loops, `t` for `*testing.T`, `b` for `*testing.B`, `w`/`r` for `http.ResponseWriter` / `*http.Request`.
+- Short **words** are fine when the meaning is obvious (`key`, `ok`, `seen`, `body`)—the goal is to ban *cryptic* one-letter names, not to require multi-word identifiers everywhere.
+- For non-idiomatic cases, prefer explicit names such as `articleScores`, `requestTimeout`, or `telegramMessageBody`.

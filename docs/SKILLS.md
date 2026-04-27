@@ -1,6 +1,6 @@
 # Neurofeed — workflows and procedures
 
-[Index of all docs](README.md). Short guide for humans and coding agents. Coding standards live in [RULES.md](RULES.md).
+[Index of all docs](README.md). Short guide for humans and coding agents. Coding standards live in [RULES.md](RULES.md). Phase delivery status: [SUMMARY.md](../SUMMARY.md) (update when each phase ships).
 
 Step-by-step local run (prerequisites, `.env`, getting `TELEGRAM_CHAT_ID`): [HOW_TO_RUN.md](HOW_TO_RUN.md).
 
@@ -40,6 +40,10 @@ export LLM_MODEL="gpt-4o-mini"
 export LLM_BASE_URL="https://api.openai.com/v1"
 export LLM_API_KEY="your-key"
 export RSS_FEED_URL="https://example.com/feed.xml"
+# Optional: RSS_FEED_TIER=primary|expert|news|community (default news)
+
+# Multiple feeds (JSON; takes precedence over RSS_FEED_URL):
+# export NEUROFEED_RSS_FEEDS='[{"url":"https://a.example/feed","tier":"primary"},{"url":"https://b.example/atom","tier":"news"}]'
 ```
 
 Optional:
@@ -47,9 +51,9 @@ Optional:
 - `NEUROFEED_HTTP_TIMEOUT` — Go duration string (e.g. `45s`) for default HTTP client timeout baseline.
 - `NEUROFEED_HTTP_TIMEOUT_SECONDS` — integer seconds; if set after the duration env is parsed, it overrides the timeout (see `internal/config`).
 
-## Adding an RSS source (after phase 2)
+## Adding an RSS source
 
-1. Add the feed URL to configuration (env or future config file).
+1. Add the feed URL to configuration (`RSS_FEED_URL` / `RSS_FEED_TIER`, or an entry in `NEUROFEED_RSS_FEEDS` JSON).
 2. Confirm fetch timeout and `User-Agent` in the ingest package.
 3. Run `make test` and a manual `make run` in a safe environment.
 

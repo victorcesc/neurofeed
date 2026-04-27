@@ -51,8 +51,6 @@ Configuration is read from the process environment. See [.env.example](../.env.e
 - `NEUROFEED_HTTP_TIMEOUT` — Go duration string (for example `45s`).
 - `NEUROFEED_HTTP_TIMEOUT_SECONDS` — positive integer seconds; if set, it overrides the duration-based value after parsing (see `internal/config`).
 
-For early phases, the pipeline may still use stubs for fetch, summarize, and notify; env vars are validated and passed through for when those integrations are wired.
-
 ## Run the application
 
 **Recommended**
@@ -69,19 +67,21 @@ go run ./cmd/neurofeed
 
 The process listens for **SIGINT** and **SIGTERM** for graceful shutdown context; stop it with Ctrl+C or `kill` as usual.
 
-### Phase 1 (RSS → Telegram, no LLM yet)
+### RSS → Telegram (no LLM digest yet)
 
 Required environment variables:
 
-- `RSS_FEED_URL` — a single RSS or Atom URL.
+- **Feeds** — either:
+  - `RSS_FEED_URL` — one RSS or Atom URL; optional `RSS_FEED_TIER` (`primary`, `expert`, `news`, `community`; default `news`), or
+  - `NEUROFEED_RSS_FEEDS` — JSON array of `{"url":"...","tier":"..."}` (when set, this list is used and `RSS_FEED_URL` is ignored for ingestion).
 - `TELEGRAM_BOT_TOKEN` — from BotFather.
 - `TELEGRAM_CHAT_ID` — where `sendMessage` should deliver (your user id, group id, or channel id; see below).
 
 Optional:
 
-- `LLM_*` — not used in phase 1 (reserved for later).
+- `LLM_*` — not used yet (reserved for later phases).
 
-On success you should see structured logs on stderr and a line like `neurofeed phase 1 run OK`. The bot will receive one plain-text message listing **article title and link** lines from the latest feed items (capped for size).
+On success you should see structured logs on stderr and a line like `neurofeed run OK`. The bot will receive one plain-text message listing **article title and link** lines (deduplicated by normalized title across feeds; capped for size).
 
 If configuration fails validation, the program logs an error and exits with code 1.
 
@@ -97,7 +97,7 @@ If configuration fails validation, the program logs an error and exits with code
 
 After that, `make run` with env set will POST to Telegram’s `sendMessage` and you should see the digest in that same chat.
 
-**How it works (short):** the binary fetches your feed with `gofeed`, maps entries to `Article`, builds one plain-text block (title + URL per item), then calls the Telegram Bot API `sendMessage` for your `chat_id`. No LLM call in phase 1.
+**How it works (short):** the binary fetches one or more feeds with `gofeed`, maps entries to `Article` (including `SourceTier` per feed), deduplicates by title, builds one plain-text block (title + URL per item), then calls the Telegram Bot API `sendMessage` for your `chat_id`. No LLM call yet.
 
 ## Build a binary
 
