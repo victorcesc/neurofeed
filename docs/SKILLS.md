@@ -50,6 +50,9 @@ Optional:
 
 - `NEUROFEED_HTTP_TIMEOUT` — Go duration string (e.g. `45s`) for default HTTP client timeout baseline.
 - `NEUROFEED_HTTP_TIMEOUT_SECONDS` — integer seconds; if set after the duration env is parsed, it overrides the timeout (see `internal/config`).
+- `NEUROFEED_LLM_TIMEOUT` — Go duration for the **LLM-only** HTTP client (default `60s`; used by `-llm-smoke` and later the real summarizer).
+
+**OpenAI I/O check (phase 3.1):** with `LLM_API_KEY` set (and optional `LLM_BASE_URL`, `LLM_MODEL`, `LLM_PROVIDER=openai`), run `make llm-smoke` or `go run ./cmd/neurofeed -llm-smoke` — one `chat/completions` call, no RSS/Telegram required.
 
 ## Adding an RSS source
 

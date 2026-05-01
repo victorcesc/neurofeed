@@ -59,7 +59,7 @@ Telegram Bot
 
 ### Fase 3 — Integração com IA (3.1 → 3.2 → 3.3)
 
-* [ ] **3.1** — Cliente HTTP OpenAI (ou compatível), env (`LLM_API_KEY`, modelo, timeouts); chamada mínima com `context` para validar I/O
+* [x] **3.1** — Cliente HTTP OpenAI (ou compatível), env (`LLM_API_KEY`, modelo, timeouts); chamada mínima com `context` para validar I/O (`-llm-smoke` / `make llm-smoke`)
 * [ ] **3.2** — Prompts do digest conforme spec; lote de artigos → pedido; saída estruturada / parseável para o pipeline
 * [ ] **3.3** — Limites de artigos/tokens, heurísticas de tamanho e clareza; `Summarizer` real na pipeline + testes (`httptest`)
 

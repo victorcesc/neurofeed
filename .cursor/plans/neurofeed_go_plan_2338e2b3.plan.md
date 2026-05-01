@@ -83,7 +83,7 @@ Phases below **merge** the roadmap in [docs/neurofeed.md](../../docs/neurofeed.m
 
 | Sub-step | Goal | Outcomes |
 |----------|------|----------|
-| **3.1** | HTTP + config | Env-backed OpenAI (or compatible) settings: API key, model, timeouts, optional base URL; `internal/ai` HTTP client using `context.Context` on every request; wire a minimal completion path (e.g. one fixed test prompt) to prove I/O without full digest logic. |
+| **3.1** | HTTP + config | **Shipped:** `internal/ai.OpenAIChatClient`, `NEUROFEED_LLM_TIMEOUT`, defaults for base URL/model; `-llm-smoke` / `make llm-smoke` + `httptest` coverage. Env-backed OpenAI (or compatible): API key, model, optional base URL; `context` on requests; minimal `chat/completions` to prove I/O (digest wiring is 3.2–3.3). |
 | **3.2** | Prompts + output shape | Prompt text aligned with [docs/neurofeed.md](../../docs/neurofeed.md) for the daily digest; map `[]domain.Article` → request body; structured output (JSON mode or strict parse) so the pipeline gets a stable string (or intermediate struct) for formatting/notify. |
 | **3.3** | Validation + integration | Caps on articles/tokens per run (cost control from plan risks); simple heuristics or schema checks on model output; `Summarizer` implementation selected in `main`/config (e.g. OpenAI vs `HeadlineSummarizer` fallback); table-driven tests + `httptest` for the client. |
 

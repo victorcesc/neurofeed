@@ -50,6 +50,7 @@ Configuration is read from the process environment. See [.env.example](../.env.e
 
 - `NEUROFEED_HTTP_TIMEOUT` — Go duration string (for example `45s`).
 - `NEUROFEED_HTTP_TIMEOUT_SECONDS` — positive integer seconds; if set, it overrides the duration-based value after parsing (see `internal/config`).
+- `NEUROFEED_LLM_TIMEOUT` — Go duration for OpenAI chat completion requests (default `60s`); see **LLM smoke** below.
 
 ## Run the application
 
@@ -79,9 +80,22 @@ Required environment variables:
 
 Optional:
 
-- `LLM_*` — not used yet (reserved for later phases).
+- `LLM_*` — used by **`-llm-smoke`** (phase 3.1); the normal RSS → Telegram run still uses the headline summarizer until phase 3.3.
 
-On success you should see structured logs on stderr and a line like `neurofeed run OK`. The bot will receive one plain-text message listing **article title and link** lines (deduplicated by normalized title across feeds; capped for size).
+When you run **`make run`** (without `-llm-smoke`), on success you should see structured logs on stderr including `step=pipeline_run_ok`. The bot will receive one plain-text message listing **article title and link** lines (deduplicated by normalized title across feeds; capped for size).
+
+### LLM smoke (OpenAI HTTP, no RSS)
+
+To verify `LLM_API_KEY` and network reachability without fetching feeds or Telegram:
+
+```bash
+export LLM_API_KEY="your-key"
+# optional: LLM_BASE_URL LLM_MODEL LLM_PROVIDER NEUROFEED_LLM_TIMEOUT
+go run ./cmd/neurofeed -llm-smoke
+# or: make llm-smoke
+```
+
+On success, stderr shows `llm_smoke_ok` with a short model reply. RSS and Telegram env vars are **not** required for this path.
 
 If configuration fails validation, the program logs an error and exits with code 1.
 

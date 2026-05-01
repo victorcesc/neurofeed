@@ -1,4 +1,4 @@
-.PHONY: fmt vet test build run tidy
+.PHONY: fmt vet test build run tidy llm-smoke
 
 fmt:
 	go fmt ./...
@@ -17,5 +17,8 @@ build:
 
 run:
 	go run ./cmd/neurofeed
+
+llm-smoke:
+	go run ./cmd/neurofeed -llm-smoke
 
 all: fmt vet test build

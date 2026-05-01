@@ -22,11 +22,16 @@ High-level status of roadmap phases ([product spec](docs/neurofeed.md), [enginee
 
 ---
 
+## Phase 3.1 — OpenAI HTTP client (smoke)
+
+**Done.** `internal/ai.OpenAIChatClient` — OpenAI-compatible `POST …/chat/completions` with `context`, `Authorization: Bearer`, `User-Agent`. Config: `LLM_API_KEY`, `LLM_BASE_URL` (default `https://api.openai.com/v1`), `LLM_MODEL` (default `gpt-4o-mini`), `LLM_PROVIDER` (`openai` or empty for smoke), `NEUROFEED_LLM_TIMEOUT` (default `60s`) for the dedicated LLM HTTP client. CLI: **`go run ./cmd/neurofeed -llm-smoke`** or **`make llm-smoke`** validates I/O without running the RSS pipeline. Normal **`make run`** still uses `HeadlineSummarizer` until phase 3.3.
+
+---
+
 ## Next phases (not implemented yet)
 
 | Phase | Focus |
 |-------|--------|
-| **3.1** | OpenAI HTTP client, env config (`LLM_API_KEY`, model, timeouts), minimal completion to validate I/O |
 | **3.2** | Digest prompts from spec, article batch → request, structured / parseable model output |
 | **3.3** | Token/article caps, output validation, wire real `Summarizer` in pipeline + `httptest` coverage |
 | **4** | Telegram message UX: categories, emojis, Markdown, safe links |

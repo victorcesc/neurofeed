@@ -8,6 +8,7 @@ import (
 func TestLoad_defaults(t *testing.T) {
 	t.Setenv("NEUROFEED_HTTP_TIMEOUT", "")
 	t.Setenv("NEUROFEED_HTTP_TIMEOUT_SECONDS", "")
+	t.Setenv("NEUROFEED_LLM_TIMEOUT", "")
 	t.Setenv("TELEGRAM_BOT_TOKEN", "")
 	t.Setenv("TELEGRAM_CHAT_ID", "")
 	t.Setenv("LLM_PROVIDER", "")
@@ -24,8 +25,34 @@ func TestLoad_defaults(t *testing.T) {
 	if cfg.HTTPClientTimeout != defaultHTTPTimeout {
 		t.Fatalf("timeout: got %v want %v", cfg.HTTPClientTimeout, defaultHTTPTimeout)
 	}
+	if cfg.LLMRequestTimeout != defaultLLMRequestTimeout {
+		t.Fatalf("LLM timeout: got %v want %v", cfg.LLMRequestTimeout, defaultLLMRequestTimeout)
+	}
 	if len(cfg.RSSFeeds) != 0 {
 		t.Fatalf("RSSFeeds: got %d want 0", len(cfg.RSSFeeds))
+	}
+}
+
+func TestLoad_LLMTimeout(t *testing.T) {
+	t.Setenv("NEUROFEED_LLM_TIMEOUT", "90s")
+	t.Setenv("NEUROFEED_RSS_FEEDS", "")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.LLMRequestTimeout != 90*time.Second {
+		t.Fatalf("got %v", cfg.LLMRequestTimeout)
+	}
+}
+
+func TestLoad_LLMTimeout_invalid(t *testing.T) {
+	t.Setenv("NEUROFEED_LLM_TIMEOUT", "not-a-duration")
+	t.Setenv("NEUROFEED_RSS_FEEDS", "")
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error")
 	}
 }
 

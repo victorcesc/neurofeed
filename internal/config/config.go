@@ -14,6 +14,8 @@ import (
 
 const (
 	defaultHTTPTimeout        = 30 * time.Second
+	defaultLLMRequestTimeout  = 60 * time.Second
+	envLLMRequestTimeout      = "NEUROFEED_LLM_TIMEOUT"
 	envRSSFeedsJSON           = "NEUROFEED_RSS_FEEDS"
 	envRSSFeedURL             = "RSS_FEED_URL"
 	envRSSFeedTier            = "RSS_FEED_TIER"
@@ -31,6 +33,8 @@ type RSSFeedEntry struct {
 // Secrets are read from the environment only; never commit real values.
 type Config struct {
 	HTTPClientTimeout time.Duration
+	// LLMRequestTimeout bounds each LLM HTTP call (chat completions). Separate from RSS/Telegram client timeout.
+	LLMRequestTimeout time.Duration
 
 	// Optional until later phases (Telegram, LLM, RSS).
 	TelegramBotToken string
@@ -54,6 +58,7 @@ type rssFeedJSON struct {
 func Load() (Config, error) {
 	cfg := Config{
 		HTTPClientTimeout: defaultHTTPTimeout,
+		LLMRequestTimeout: defaultLLMRequestTimeout,
 	}
 
 	if httpTimeoutValue := os.Getenv("NEUROFEED_HTTP_TIMEOUT"); httpTimeoutValue != "" {
@@ -76,6 +81,17 @@ func Load() (Config, error) {
 			return Config{}, fmt.Errorf("NEUROFEED_HTTP_TIMEOUT_SECONDS must be positive")
 		}
 		cfg.HTTPClientTimeout = time.Duration(timeoutSeconds) * time.Second
+	}
+
+	if llmTimeoutValue := strings.TrimSpace(os.Getenv(envLLMRequestTimeout)); llmTimeoutValue != "" {
+		llmTimeoutDuration, err := time.ParseDuration(llmTimeoutValue)
+		if err != nil {
+			return Config{}, fmt.Errorf("%s: %w", envLLMRequestTimeout, err)
+		}
+		if llmTimeoutDuration <= 0 {
+			return Config{}, fmt.Errorf("%s must be positive", envLLMRequestTimeout)
+		}
+		cfg.LLMRequestTimeout = llmTimeoutDuration
 	}
 
 	cfg.TelegramBotToken = os.Getenv("TELEGRAM_BOT_TOKEN")
@@ -137,4 +153,16 @@ func ValidatePhase1(cfg Config) error {
 		return nil
 	}
 	return fmt.Errorf("phase 1 requires %s", strings.Join(missing, ", "))
+}
+
+// ValidateLLMSmoke returns an error if the environment is not ready for a minimal OpenAI chat completion (flag -llm-smoke).
+func ValidateLLMSmoke(cfg Config) error {
+	if strings.TrimSpace(cfg.LLMAPIKey) == "" {
+		return fmt.Errorf("LLM_API_KEY is required for -llm-smoke")
+	}
+	provider := strings.ToLower(strings.TrimSpace(cfg.LLMProvider))
+	if provider != "" && provider != "openai" {
+		return fmt.Errorf("LLM_PROVIDER must be openai or empty for -llm-smoke (got %q)", cfg.LLMProvider)
+	}
+	return nil
 }

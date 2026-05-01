@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +19,9 @@ import (
 )
 
 func main() {
+	llmSmoke := flag.Bool("llm-smoke", false, "send one minimal OpenAI chat completion and exit (requires LLM_API_KEY; optional LLM_BASE_URL, LLM_MODEL, LLM_PROVIDER)")
+	flag.Parse()
+
 	// Structured logs on stderr; each major step uses the same "step" attribute for easy grepping.
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
@@ -27,7 +32,34 @@ func main() {
 		logger.Error("neurofeed", "step", "config_load", "err", err)
 		os.Exit(1)
 	}
-	logger.Info("neurofeed", "step", "config_loaded", "feeds", len(cfg.RSSFeeds), "http_timeout", cfg.HTTPClientTimeout.String())
+	logger.Info("neurofeed", "step", "config_loaded", "feeds", len(cfg.RSSFeeds), "http_timeout", cfg.HTTPClientTimeout.String(), "llm_timeout", cfg.LLMRequestTimeout.String())
+
+	if *llmSmoke {
+		if err := config.ValidateLLMSmoke(cfg); err != nil {
+			logger.Error("neurofeed", "step", "llm_smoke_validate", "err", err)
+			os.Exit(1)
+		}
+		llmClient := &http.Client{Timeout: cfg.LLMRequestTimeout}
+		chatClient, err := ai.NewOpenAIChatClientFromConfig(cfg, llmClient)
+		if err != nil {
+			logger.Error("neurofeed", "step", "llm_client", "err", err)
+			os.Exit(1)
+		}
+		smokeCtx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+		defer cancel()
+		callCtx, callCancel := context.WithTimeout(smokeCtx, cfg.LLMRequestTimeout+30*time.Second)
+		defer callCancel()
+		logger.Info("neurofeed", "step", "llm_smoke_start", "detail", "POST chat/completions")
+		reply, err := chatClient.ChatCompletion(callCtx, []ai.ChatMessage{
+			{Role: "user", Content: "Reply with exactly the two characters OK and nothing else."},
+		})
+		if err != nil {
+			logger.Error("neurofeed", "step", "llm_smoke_failed", "err", err)
+			os.Exit(1)
+		}
+		logger.Info("neurofeed", "step", "llm_smoke_ok", "reply_chars", len(reply), "reply", reply)
+		os.Exit(0)
+	}
 
 	if err := config.ValidatePhase1(cfg); err != nil {
 		logger.Error("neurofeed", "step", "config_validate", "err", err)
