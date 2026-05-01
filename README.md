@@ -8,7 +8,7 @@ Phase checklist (what shipped vs next): **[SUMMARY.md](SUMMARY.md)**.
 
 **Phases 0–2 are done** (scaffold, single or multi RSS with per-feed **tiers**, title dedup, digest → Telegram). A successful run logs `neurofeed run OK`.
 
-**Phases 3–6 are not done yet** (LLM summaries, richer Telegram formatting, profiles, retries/logging/cache). See the phase table in [`.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md`](.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md).
+**Phases 3–6 are not done yet** (LLM summaries, richer Telegram formatting, operator-defined multi-recipient config, retries/logging/cache). See the phase table in [`.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md`](.cursor/plans/neurofeed_go_plan_2338e2b3.plan.md).
 
 ## Run locally
 

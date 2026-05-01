@@ -64,15 +64,15 @@ Optional:
 
 Document the chosen approach here once the project picks one.
 
-## Personalization and onboarding (phase 5)
+## Recipients and fixed subjects (phase 5)
 
-Product detail lives in [neurofeed.md](neurofeed.md) (Fase 5 + section *Descoberta de fontes por tema*). Summary for implementers:
+Product detail lives in [neurofeed.md](neurofeed.md) (Fase 5 + *Temas e destinatários* / *Fontes por tema*). Summary for implementers:
 
-- **LLM + RAG** (catalog of known feeds) runs **only at onboarding**, when the user confirms their subjects (up to 5). It suggests the **best 3 RSS URLs per subject**; each candidate is validated before save.
-- **After onboarding**, the digest pipeline uses **those persisted URLs** only — not a fresh LLM+RAG pick each run.
-- **Subject changes:** the user may **not** change subjects again until **24 hours have elapsed since the last confirmation** (`confirmed_at` + 24h; wall-clock duration, not calendar midnight).
+- **Telegram users do not pick topics** in the bot. They only **receive** formatted digests; **section labels (subjects)** and **which RSS URLs** apply come entirely from **operator config** (versioned file or code), per recipient when multi-`chat_id` exists.
+- **Feeds per subject** are a **fixed curated list** (URLs + tiers) — **no** LLM for feed discovery. The pipeline resolves each recipient’s feed set from their assigned subjects, dedupes by URL.
+- **Changing subjects or feeds** is an **operator change** (redeploy / edit config), not an in-chat flow.
 
-Until profiles exist, global `RSS_FEED_URL` / `NEUROFEED_RSS_FEEDS` remain the MVP way to configure feeds (see *Adding an RSS source* above).
+Until multi-recipient config exists, global `RSS_FEED_URL` / `NEUROFEED_RSS_FEEDS` remain the MVP way to configure feeds (see *Adding an RSS source* above).
 
 ## Prompt templates (phase 3.2)
 

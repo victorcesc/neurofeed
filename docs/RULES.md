@@ -1,16 +1,6 @@
-# Neurofeed — engineering rules (Go)
+# Engineering rules (Go)
 
 Canonical conventions for this repository. Prefer these over ad-hoc style.
-
-## Layout
-
-- `cmd/neurofeed/` — entrypoint only: wiring, signals, exit codes.
-- `internal/config/` — environment-based configuration, validation, defaults.
-- `internal/domain/` — core types (`Article`, etc.) and pure logic (dedup keys, source tiers).
-- `internal/ingest/` — RSS and other fetchers; HTTP clients with timeouts.
-- `internal/ai/` — LLM clients and prompt assembly.
-- `internal/notify/` — Telegram and other sinks.
-- `internal/pipeline/` — orchestration across boundaries.
 
 Add a new package when a boundary or test surface deserves isolation. Do not create `pkg/` for private app code.
 
@@ -48,11 +38,6 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 - Use `log/slog` with structured keys (`slog.Info("msg", "key", value)`).
 - Log levels: `Info` for high-level pipeline steps, `Debug` for verbose diagnostics, `Error` before exit.
 
-## Telegram and LLM providers
-
-- Respect API rate limits; cap batch sizes and output tokens in configuration.
-- Telegram message length: plan splitting or continuation messages when the digest exceeds limits (see product spec in [neurofeed.md](neurofeed.md)).
-- Escape or select parse mode carefully for Markdown/HTML.
 
 ## Testing
 
@@ -70,4 +55,3 @@ Add a new package when a boundary or test surface deserves isolation. Do not cre
 - Variable names must be descriptive and communicate intent clearly in their scope.
 - Avoid **single-letter** names and vague placeholders (`v`, `x`, `tmp`, `n` as “some number”) except where Go convention is universal and scope is tiny: `ctx` for `context.Context`, `err` for errors, `i`/`j`/`k` in short index loops, `t` for `*testing.T`, `b` for `*testing.B`, `w`/`r` for `http.ResponseWriter` / `*http.Request`.
 - Short **words** are fine when the meaning is obvious (`key`, `ok`, `seen`, `body`)—the goal is to ban *cryptic* one-letter names, not to require multi-word identifiers everywhere.
-- For non-idiomatic cases, prefer explicit names such as `articleScores`, `requestTimeout`, or `telegramMessageBody`.

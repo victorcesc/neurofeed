@@ -76,7 +76,7 @@ Phases below **merge** the roadmap in [docs/neurofeed.md](../../docs/neurofeed.m
 | **2 — Multiple sources** | Scale ingestion | Multiple feeds from config (YAML/JSON or env list) **each with a source tier** (`primary` / `expert` / `news` / `community` per [docs/neurofeed.md](../../docs/neurofeed.md)); map to `Article` including `SourceTier`; dedup by normalized title (lower, strip punctuation; optional hash later). |
 | **3 — AI integration** | Summaries | Split into **3.1–3.3** below (OpenAI HTTP + config; prompts and output shape; validation, caps, pipeline wiring). |
 | **4 — Message UX** | Readable digest | Categories, emojis, Markdown (or HTML) with Telegram-safe formatting; clickable links. |
-| **5 — Personalization** | Multi-audience | Profiles; **up to 5 interest topics** per profile (Telegram UX: **catalog + search** as primary, optional limited free-text per [docs/neurofeed.md](../../docs/neurofeed.md)); map interests → keyword/synonym lists; **tier weight overrides**; per-profile feed subsets. |
+| **5 — Recipients & fixed subjects** | Multi-audience | Operator config: **subjects and RSS lists per recipient** (no in-Telegram topic picking); Telegram **receive-only**; map subjects → keyword/synonym lists for prompts/filtering; **fixed curated RSS URL lists per subject** (versioned config/code, no LLM for feed pick); **tier weight overrides**. |
 | **6 — Robustness** | Production habits | Retries with backoff for transient HTTP failures, structured logging (`log/slog`), request timeouts everywhere, simple TTL cache if needed to avoid duplicate API work. |
 
 ### Phase 3 sub-steps (3.1–3.3)

@@ -30,7 +30,7 @@ High-level status of roadmap phases ([product spec](docs/neurofeed.md), [enginee
 | **3.2** | Digest prompts from spec, article batch → request, structured / parseable model output |
 | **3.3** | Token/article caps, output validation, wire real `Summarizer` in pipeline + `httptest` coverage |
 | **4** | Telegram message UX: categories, emojis, Markdown, safe links |
-| **5** | Profiles, interest topics, tier overrides, feed subsets |
+| **5** | Operator-defined recipients/subjects/feeds; Telegram receive-only; per-subject **fixed curated RSS lists** (no LLM feed discovery); tier overrides |
 | **6** | Retries/backoff, structured logging polish, caches, hardening |
 
 ---

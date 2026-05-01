@@ -6,7 +6,7 @@ Handbooks live under [docs/](docs/); read in this order:
 
 1. [docs/RULES.md](docs/RULES.md) — layout, errors, context, HTTP, and testing expectations.
 2. [docs/SKILLS.md](docs/SKILLS.md) — run commands, quality targets, and env var index.
-3. [docs/neurofeed.md](docs/neurofeed.md) — product behavior, prompts, onboarding (LLM+RAG for top-3 feeds once, persisted URLs, 24h subject-change cooldown after confirmation).
+3. [docs/neurofeed.md](docs/neurofeed.md) — product behavior, prompts (subjects and feeds **operator-hardcoded** per recipient; Telegram **receive-only**; LLM for digest only).
 4. [SUMMARY.md](SUMMARY.md) — phase completion vs next; **update when shipping a new phase** (same rule as in that file).
 
 First-time local setup (copy `.env`, load it, Telegram `chat_id`): [docs/HOW_TO_RUN.md](docs/HOW_TO_RUN.md).

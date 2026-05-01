@@ -7,7 +7,7 @@ Criar um sistema que:
 * Coleta notícias de múltiplas fontes (RSS/APIs)
 * Deduplica e prepara itens para o digest
 * Gera resumos usando IA
-* Envia diariamente via Telegram
+* Envia diariamente via Telegram (**só entrega**: assuntos e fontes vêm de config fixa; o utilizador **não** configura temas no chat)
 
 ---
 
@@ -70,17 +70,16 @@ Telegram Bot
 * [ ] Formatação Markdown
 * [ ] Links clicáveis
 
-### Fase 5 — Personalização
+### Fase 5 — Destinatários e temas fixos (sem escolha no Telegram)
 
-* [ ] Perfis (você / namorada)
-* [ ] **Interesses no Telegram**: até **5** temas por perfil (ex.: AI, tech, futebol, NBA, bitcoin) — ver *Interesses: lista pronta vs texto livre* abaixo
-* [ ] **Cooldown de alteração de temas**: após confirmar os temas, o utilizador **só pode voltar a mudar os temas após 24 horas desde essa confirmação** (regra de produto; implementar com `confirmed_at` no perfil ou equivalente)
-* [ ] Mapear cada interesse → lista de **keywords / sinônimos** (prompt da IA e relevância)
-* [ ] **No onboarding** (quando o utilizador confirma os temas): chamada na API de IA com **RAG de catálogo de fontes** para sugerir **3 melhores feeds RSS por tema** — **não** repetir este passo em cada execução do digest diário
-* [ ] **Persistir** as URLs dos feeds aprovados no perfil; o pipeline diário **só lê estas URLs guardadas** (variáveis de ambiente globais ficam para MVP, defaults ou deploy sem perfis)
-* [ ] Validar operacionalidade de cada feed sugerido (`HTTP 200`, parse RSS ok, itens recentes) antes de salvar no perfil
-* [ ] **Pesos dos tiers** por perfil ou global (override dos defaults do `domain`)
-* [ ] Filtragem personalizada
+* [ ] **Telegram só recebe:** o utilizador **não** escolhe temas nem interage com fluxos de configuração no chat; só recebe mensagens já formatadas (Fase 4+) com **secções por assunto** definidos pelo operador.
+* [ ] **Perfis / destinatários** (ex.: várias pessoas ou `chat_id` distintos): cada um tem **conjunto de temas e feeds fixos na config** (código ou ficheiro versionado) — não há onboarding nem confirmação pelo utilizador final.
+* [ ] Mapear cada **tema atribuído** ao destinatário → lista de **keywords / sinônimos** (prompt da IA e relevância), quando a filtragem por tema fizer sentido
+* [ ] **Fontes por tema = lista fixa curada** no produto: cada tema mapeia para **URLs RSS** (com tier por URL). **Sem** LLM nem RAG para descobrir feeds.
+* [ ] O pipeline diário resolve **só a partir da config** as URLs por destinatário (união das listas dos seus temas, dedupe por URL); variáveis de ambiente globais (`NEUROFEED_RSS_FEEDS`, etc.) podem continuar como MVP para um único destinatário
+* [ ] Validar operacionalidade dos feeds em job de manutenção ou arranque (`HTTP 200`, parse RSS ok, itens recentes onde aplicável); feeds inválidos: log + exclusão temporária ou fallback definido pelo operador
+* [ ] **Pesos dos tiers** por destinatário ou global (override dos defaults do `domain`)
+* [ ] Filtragem por tema / destinatário quando aplicável
 
 ### Fase 6 — Robustez
 
@@ -140,7 +139,7 @@ Política editorial do Neurofeed: **cada URL de feed na config** recebe um **tie
 
 **Pesos padrão** (constantes em `domain`, ex.: `DefaultTierWeightPrimary`): `primary` +4, `expert` +3, `news` +2, `community` −1, não configurado 0.
 
-**Personalização (Fase 5):** cada **perfil** (ou ambiente) pode **sobrescrever** esses inteiros na config quando existir multi‑audiência.
+**Multi-destinatário (Fase 5):** cada **perfil** na config pode **sobrescrever** esses inteiros quando houver vários destinatários com políticas diferentes.
 
 **Regra de ouro:** tiers alinham o digest à hierarquia de fontes; **não substituem** sozinhos o resumo com IA nem o contexto editorial que vêm da Fase 3 em diante.
 
@@ -158,35 +157,23 @@ map[string]bool // chave: título normalizado
 
 ---
 
-### Interesses: lista pronta vs texto livre (Telegram, máx. 5)
+### Temas e destinatários (só configuração, não Telegram)
 
-**O que é mais usado na indústria:** fluxo principal com **lista pré-curada** (multi‑select, botões inline ou menu com busca) + **limite fixo** (aqui: 5). Motivos: ortografia consistente, i18n, keywords estáveis por trás, menos abuso, onboarding rápido.
+**Modelo:** quais **assuntos / secções** aparecem no digest e que **feeds** alimentam cada assunto são definidos **só pelo operador** (config versionada ou código). O utilizador no Telegram **não** escolhe temas, não confirma listas e não há cooldown de “mudança de interesses” no produto — alterações são **deploy / editar config**.
 
-**Texto livre** (“escreva seus 5 temas”) aparece em produtos estilo *Google Alerts* ou power users: mais flexível, mas exige **normalização** (sinónimos, stemming, ou um passo de IA para mapear frase → tags internas) e gera mais ruído na relevância.
-
-**Híbrido (recomendado para o Neurofeed):** **catálogo grande pesquisável** (categorias: tecnologia, desporto, mercados…) para a maior parte dos utilizadores + **0–1 slots opcionais de texto curto** (“outro: ___”) com validação (tamanho máx., lista negra, mapeamento manual ou IA leve para tag interna). Assim cobres *NBA* e *bitcoin* sem depender de o utilizador escrever bem *Ethereum* vs *etherium*.
-
-**Resumo:** começa com **lista pré-feita + busca**; acrescenta **texto livre limitado** só se métricas pedirem.
+**Formato:** na Fase 4+, o texto enviado ao Telegram pode agrupar itens por assunto (cabeçalhos por tema) para leitura clara; esses rótulos vêm da mesma config que fixa os RSS por tema.
 
 ---
 
-### Descoberta de fontes por tema (IA + RAG)
+### Fontes por tema (lista fixa curada)
 
-**Quando corre:** **Apenas no onboarding** — depois de o utilizador confirmar até **5 temas** (e respeitando o **cooldown de 24 horas desde a última confirmação** antes de poder mudar temas outra vez; ver Fase 5). O digest diário **não** invoca LLM+RAG para escolher URLs; usa as feeds **já guardadas** no perfil.
+**Política:** cada **tema** usado no produto tem uma **lista fixa de feeds RSS** (URLs + tiers) — p.ex. struct em Go, JSON em repo, ou tabela estática. **Não** há descoberta de feeds por LLM, RAG, nem busca na internet no fluxo do Neurofeed.
 
-**Depois do onboarding:** o utilizador **mantém** as URLs validadas enquanto não mudar os temas; **nova mudança de temas** só é permitida quando tiverem passado **24 horas** desde o `confirmed_at` da última confirmação (ou via futura funcionalidade explícita “atualizar fontes”).
+**Resolução:** para cada destinatário, o backend calcula o conjunto de URLs a partir dos **temas atribuídos a esse destinatário na config** (união das listas fixas, dedupe por URL), com validação opcional em arranque ou job (`HTTP 200`, parse RSS/Atom ok).
 
-Quando o utilizador finalizar a seleção de temas, o sistema executa um passo de descoberta assistida:
+**Digest diário:** usa **apenas** URLs derivadas dessa config (ou env global no MVP de um único `chat_id`). A IA entra **só** na fase de resumo / digest (Fase 3+), não na escolha de fontes.
 
-1. Para cada tema, faz **1 chamada na API de IA** com contexto RAG (catálogo interno de fontes já conhecidas e seus metadados: idioma, categoria, país, qualidade histórica e URL do feed).
-2. A IA devolve **top 3 fontes RSS** para cada tema, com justificativa curta.
-3. Antes de persistir, o backend valida cada feed candidato:
-   - responde com `HTTP 200`;
-   - parseia como RSS/Atom com sucesso;
-   - possui itens recentes (janela configurável, ex.: últimos 7 dias).
-4. Só feeds aprovados entram no perfil; falhas voltam para fallback (fontes default por tema) e log de observabilidade.
-
-Objetivo: garantir que a personalização não depende apenas de "nome bonito de fonte", mas de feeds realmente operacionais para o pipeline diário — e que o custo e a variabilidade do LLM+RAG ficam **no momento de configuração do perfil**, não em cada corrida agendada.
+**Manutenção:** quando um feed fixo deixa de responder, o operador atualiza a lista curada (release) ou um job marca o feed como indisponível até correção — sem passar por modelo para “encontrar substituto”.
 
 ---
 
