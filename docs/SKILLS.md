@@ -51,12 +51,15 @@ Optional:
 - `NEUROFEED_HTTP_TIMEOUT` — Go duration string (e.g. `45s`) for default HTTP client timeout baseline.
 - `NEUROFEED_HTTP_TIMEOUT_SECONDS` — integer seconds; if set after the duration env is parsed, it overrides the timeout (see `internal/config`).
 - `NEUROFEED_LLM_TIMEOUT` — Go duration for the **LLM-only** HTTP client (default `60s`; used by `-llm-smoke` and later the real summarizer).
+- `NEUROFEED_RSS_ITEMS_PER_FEED` — integer **N** newest items **per RSS URL** after parse (sorted by `pubDate` / `updated`; default **2**). Set to **0** to disable the cap and keep every item each feed returns.
 
 **OpenAI I/O check (phase 3.1):** with `LLM_API_KEY` set (and optional `LLM_BASE_URL`, `LLM_MODEL`, `LLM_PROVIDER=openai`), run `make llm-smoke` or `go run ./cmd/neurofeed -llm-smoke` — one `chat/completions` call, no RSS/Telegram required.
 
+**Full digest run:** same `LLM_*` plus RSS/Telegram — `make run` uses **`DigestSummarizer`** when the provider is OpenAI (or unset). Tune **`NEUROFEED_LLM_MAX_ARTICLES`** and **`NEUROFEED_LLM_MAX_OUTPUT_TOKENS`** if needed (with multiple **`subject`** values, articles are **sampled round-robin by subject** up to that cap so every topic reaches the model). Telegram messages use **HTML** parse mode (bold headers, clickable links, escaped text).
+
 ## Adding an RSS source
 
-1. Add the feed URL to configuration (`RSS_FEED_URL` / `RSS_FEED_TIER`, or an entry in `NEUROFEED_RSS_FEEDS` JSON).
+1. Add the feed URL to configuration (`RSS_FEED_URL` / `RSS_FEED_TIER`, or an entry in `NEUROFEED_RSS_FEEDS` JSON). Optionally set **`subject`** on each JSON object (or **`RSS_FEED_SUBJECT`** for the single-feed path): feeds with at least one non-empty subject get **sectioned digests** (`📌` headers; LLM returns `sections` with **`picks`** per subject). **Every distinct `subject` from the feed list appears in each digest** (in first-configured order), even when that feed produced no items—empty sections show a short placeholder. Feeds with no subject still work; items without a subject bucket as **`Geral`** when any other feed has a subject.
 2. Confirm fetch timeout and `User-Agent` in the ingest package.
 3. Run `make test` and a manual `make run` in a safe environment.
 

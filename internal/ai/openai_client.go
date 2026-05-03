@@ -14,16 +14,32 @@ import (
 
 const openAIChatCompletionsPath = "/chat/completions"
 
+const defaultChatMaxTokens = 256
+
 // ChatMessage is one entry in an OpenAI-compatible chat completion request.
 type ChatMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
 
+// ChatCompletionInput controls a single chat completions call.
+type ChatCompletionInput struct {
+	Messages         []ChatMessage
+	MaxTokens        int      // if zero, defaultChatMaxTokens (256) is used
+	JSONResponseMode bool     // sets response_format type json_object when true
+	Temperature      *float64 // optional; omitted when nil
+}
+
 type chatCompletionRequest struct {
-	Model     string        `json:"model"`
-	Messages  []ChatMessage `json:"messages"`
-	MaxTokens int           `json:"max_tokens,omitempty"`
+	Model          string              `json:"model"`
+	Messages       []ChatMessage       `json:"messages"`
+	MaxTokens      int                 `json:"max_tokens,omitempty"`
+	Temperature    *float64            `json:"temperature,omitempty"`
+	ResponseFormat *responseFormatSpec `json:"response_format,omitempty"`
+}
+
+type responseFormatSpec struct {
+	Type string `json:"type"`
 }
 
 type chatCompletionResponse struct {
@@ -72,33 +88,46 @@ func NewOpenAIChatClientFromConfig(cfg config.Config, httpClient *http.Client) (
 	}, nil
 }
 
-// ChatCompletion sends a chat completion request and returns the first assistant message content (trimmed).
+// ChatCompletion sends a short chat completion (default max_tokens 256, no JSON mode). For full control use ChatCompletionWithOptions.
 func (openAI *OpenAIChatClient) ChatCompletion(ctx context.Context, messages []ChatMessage) (string, error) {
+	return openAI.ChatCompletionWithOptions(ctx, ChatCompletionInput{Messages: messages})
+}
+
+// ChatCompletionWithOptions sends POST /chat/completions with optional JSON response mode and token budget.
+func (openAI *OpenAIChatClient) ChatCompletionWithOptions(ctx context.Context, input ChatCompletionInput) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	if len(messages) == 0 {
+	if len(input.Messages) == 0 {
 		return "", fmt.Errorf("ai: no messages")
+	}
+	maxTokens := input.MaxTokens
+	if maxTokens <= 0 {
+		maxTokens = defaultChatMaxTokens
 	}
 	requestURL := openAI.baseURL + openAIChatCompletionsPath
 	payload := chatCompletionRequest{
-		Model:     openAI.model,
-		Messages:  messages,
-		MaxTokens: 256,
+		Model:       openAI.model,
+		Messages:    input.Messages,
+		MaxTokens:   maxTokens,
+		Temperature: input.Temperature,
+	}
+	if input.JSONResponseMode {
+		payload.ResponseFormat = &responseFormatSpec{Type: "json_object"}
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("ai: encode request: %w", err)
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL, bytes.NewReader(body))
+	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL, bytes.NewReader(body))
 	if err != nil {
 		return "", fmt.Errorf("ai: build request: %w", err)
 	}
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", "Bearer "+openAI.apiKey)
-	request.Header.Set("User-Agent", "neurofeed/1.0 (+https://github.com/victorcesc/neurofeed)")
+	httpRequest.Header.Set("Content-Type", "application/json")
+	httpRequest.Header.Set("Authorization", "Bearer "+openAI.apiKey)
+	httpRequest.Header.Set("User-Agent", "neurofeed/1.0 (+https://github.com/victorcesc/neurofeed)")
 
-	response, err := openAI.httpClient.Do(request)
+	response, err := openAI.httpClient.Do(httpRequest)
 	if err != nil {
 		return "", fmt.Errorf("ai: http: %w", err)
 	}

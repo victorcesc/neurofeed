@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -32,7 +33,7 @@ func main() {
 		logger.Error("neurofeed", "step", "config_load", "err", err)
 		os.Exit(1)
 	}
-	logger.Info("neurofeed", "step", "config_loaded", "feeds", len(cfg.RSSFeeds), "http_timeout", cfg.HTTPClientTimeout.String(), "llm_timeout", cfg.LLMRequestTimeout.String())
+	logger.Info("neurofeed", "step", "config_loaded", "feeds", len(cfg.RSSFeeds), "rss_max_items_per_feed", cfg.RSSMaxItemsPerFeed, "http_timeout", cfg.HTTPClientTimeout.String(), "llm_timeout", cfg.LLMRequestTimeout.String(), "llm_max_articles", cfg.LLMMaxDigestArticles, "llm_max_output_tokens", cfg.LLMMaxOutputTokens)
 
 	if *llmSmoke {
 		if err := config.ValidateLLMSmoke(cfg); err != nil {
@@ -70,10 +71,22 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// One pipeline run must finish before this deadline (feeds + Telegram under one umbrella).
-	runCtx, cancel := context.WithTimeout(ctx, cfg.HTTPClientTimeout+time.Minute)
+	useDigestLLM := strings.TrimSpace(cfg.LLMAPIKey) != ""
+	if useDigestLLM {
+		provider := strings.ToLower(strings.TrimSpace(cfg.LLMProvider))
+		if provider != "" && provider != "openai" {
+			logger.Warn("neurofeed", "step", "summarizer_fallback", "detail", "LLM_PROVIDER is not openai; using HeadlineSummarizer", "provider", cfg.LLMProvider)
+			useDigestLLM = false
+		}
+	}
+
+	runDeadline := cfg.HTTPClientTimeout + time.Minute
+	if useDigestLLM {
+		runDeadline += cfg.LLMRequestTimeout + 2*time.Minute
+	}
+	runCtx, cancel := context.WithTimeout(ctx, runDeadline)
 	defer cancel()
-	logger.Info("neurofeed", "step", "run_context", "deadline", cfg.HTTPClientTimeout+time.Minute)
+	logger.Info("neurofeed", "step", "run_context", "deadline", runDeadline.String())
 
 	httpClient := ingest.HTTPClient(cfg.HTTPClientTimeout)
 
@@ -86,7 +99,12 @@ func main() {
 			logger.Error("neurofeed", "step", "feed_tier_parse", "feed_index", index, "err", err)
 			os.Exit(1)
 		}
-		feedSpecs = append(feedSpecs, ingest.RSSFeedSpec{URL: entry.URL, Tier: tier})
+		feedSpecs = append(feedSpecs, ingest.RSSFeedSpec{
+			URL:             entry.URL,
+			Tier:            tier,
+			Subject:         entry.Subject,
+			MaxItemsPerFeed: cfg.RSSMaxItemsPerFeed,
+		})
 	}
 	logger.Info("neurofeed", "step", "feeds_wired", "count", len(feedSpecs))
 
@@ -97,12 +115,27 @@ func main() {
 		Log:       logger,
 	}
 	notifier := &notify.TelegramNotifier{
-		Token:  cfg.TelegramBotToken,
-		ChatID: cfg.TelegramChatID,
-		Client: httpClient,
+		Token:     cfg.TelegramBotToken,
+		ChatID:    cfg.TelegramChatID,
+		Client:    httpClient,
+		ParseMode: "HTML",
 	}
 
-	contentPipeline := pipeline.New(cfg, logger, fetcher, ai.HeadlineSummarizer{}, notifier)
+	var summarizer ai.Summarizer = ai.HeadlineSummarizer{}
+	if useDigestLLM {
+		llmHTTP := &http.Client{Timeout: cfg.LLMRequestTimeout}
+		chatClient, err := ai.NewOpenAIChatClientFromConfig(cfg, llmHTTP)
+		if err != nil {
+			logger.Error("neurofeed", "step", "llm_client", "err", err)
+			os.Exit(1)
+		}
+		summarizer = ai.NewDigestSummarizer(chatClient, cfg.LLMMaxDigestArticles, cfg.LLMMaxOutputTokens)
+		logger.Info("neurofeed", "step", "summarizer_wired", "detail", "DigestSummarizer (OpenAI JSON digest)")
+	} else {
+		logger.Info("neurofeed", "step", "summarizer_wired", "detail", "HeadlineSummarizer (no LLM_API_KEY)")
+	}
+
+	contentPipeline := pipeline.New(cfg, logger, fetcher, summarizer, notifier)
 	logger.Info("neurofeed", "step", "pipeline_run_start", "detail", "fetch → dedup → summarize → notify")
 
 	if err := contentPipeline.Run(runCtx); err != nil {

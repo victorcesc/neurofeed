@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,6 +21,10 @@ type RSSFetcher struct {
 	Client      *http.Client
 	UserAgent   string
 	DefaultTier domain.SourceTier
+	// Subject is copied onto each Article (optional section label from config).
+	Subject string
+	// MaxItemsPerFeed keeps the N newest items by Published time (0 = keep all from the feed).
+	MaxItemsPerFeed int
 }
 
 // Fetch implements FeedFetcher: HTTP GET + parse via gofeed, then map each item to domain.Article with this fetcher's tier.
@@ -88,9 +93,33 @@ func (fetcher *RSSFetcher) Fetch(ctx context.Context) ([]domain.Article, error) 
 			Description: description,
 			Source:      sourceName,
 			SourceTier:  tier,
+			Subject:     fetcher.Subject,
 			Published:   published,
 		})
 	}
 
+	sortArticlesNewestFirst(articles)
+	if fetcher.MaxItemsPerFeed > 0 && len(articles) > fetcher.MaxItemsPerFeed {
+		articles = articles[:fetcher.MaxItemsPerFeed]
+	}
+
 	return articles, nil
+}
+
+// sortArticlesNewestFirst orders by Published descending; unknown dates (zero) sort last, stable for ties.
+func sortArticlesNewestFirst(articles []domain.Article) {
+	sort.SliceStable(articles, func(indexI, indexJ int) bool {
+		publishedI := articles[indexI].Published
+		publishedJ := articles[indexJ].Published
+		if publishedI.IsZero() && publishedJ.IsZero() {
+			return false
+		}
+		if publishedI.IsZero() {
+			return false
+		}
+		if publishedJ.IsZero() {
+			return true
+		}
+		return publishedI.After(publishedJ)
+	})
 }

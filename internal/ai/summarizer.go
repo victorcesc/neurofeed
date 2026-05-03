@@ -12,6 +12,13 @@ type Summarizer interface {
 	Summarize(ctx context.Context, articles []domain.Article) (string, error)
 }
 
+// SubjectOrderedSummarizer is implemented by summarizers that can fix digest section order
+// (e.g. all configured RSS subjects, including empty sections for this run).
+type SubjectOrderedSummarizer interface {
+	Summarizer
+	SummarizeWithSubjectOrder(ctx context.Context, articles []domain.Article, subjectOrder []string) (string, error)
+}
+
 // StubSummarizer is a phase-0 placeholder that performs no external I/O.
 type StubSummarizer struct{}
 

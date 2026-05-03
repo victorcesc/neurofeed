@@ -10,5 +10,7 @@ type Article struct {
 	Description string
 	Source      string
 	SourceTier  SourceTier
-	Published   time.Time
+	// Subject is an optional section label from NEUROFEED_RSS_FEEDS JSON ("subject" per feed). Empty means bucket DefaultArticleSubject for grouping.
+	Subject   string
+	Published time.Time
 }

@@ -40,8 +40,8 @@ func TestMultiRSSFetcher_Fetch_twoFeeds(t *testing.T) {
 
 	multiFetcher := &MultiRSSFetcher{
 		Feeds: []RSSFeedSpec{
-			{URL: first.URL, Tier: domain.SourceTierPrimary},
-			{URL: second.URL, Tier: domain.SourceTierCommunity},
+			{URL: first.URL, Tier: domain.SourceTierPrimary, Subject: "A"},
+			{URL: second.URL, Tier: domain.SourceTierCommunity, Subject: "B"},
 		},
 		Client: &http.Client{},
 		Log:    slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError + 1})),
@@ -54,10 +54,10 @@ func TestMultiRSSFetcher_Fetch_twoFeeds(t *testing.T) {
 	if len(articles) != 2 {
 		t.Fatalf("len=%d", len(articles))
 	}
-	if articles[0].Title != "A" || articles[0].SourceTier != domain.SourceTierPrimary {
+	if articles[0].Title != "A" || articles[0].SourceTier != domain.SourceTierPrimary || articles[0].Subject != "A" {
 		t.Fatalf("first: %+v", articles[0])
 	}
-	if articles[1].Title != "B" || articles[1].SourceTier != domain.SourceTierCommunity {
+	if articles[1].Title != "B" || articles[1].SourceTier != domain.SourceTierCommunity || articles[1].Subject != "B" {
 		t.Fatalf("second: %+v", articles[1])
 	}
 }

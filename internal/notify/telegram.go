@@ -13,18 +13,22 @@ import (
 
 const telegramAPIMessageLimit = 4096
 
-// TelegramNotifier sends plain text via the Telegram Bot API sendMessage method.
+// TelegramNotifier sends text via the Telegram Bot API sendMessage method.
+// When ParseMode is "HTML" (recommended for digests), Text must use Telegram-safe HTML entities.
 type TelegramNotifier struct {
 	// APIBaseURL is optional. If empty, https://api.telegram.org is used. Set in tests to redirect HTTP.
 	APIBaseURL string
 	Token      string
 	ChatID     string
 	Client     *http.Client
+	// ParseMode is optional: e.g. "HTML" for formatted digests; omit or empty for plain text.
+	ParseMode string
 }
 
 type telegramSendMessageRequest struct {
 	ChatID                string `json:"chat_id"`
 	Text                  string `json:"text"`
+	ParseMode             string `json:"parse_mode,omitempty"`
 	DisableWebPagePreview bool   `json:"disable_web_page_preview"`
 }
 
@@ -59,11 +63,15 @@ func (notifier *TelegramNotifier) Notify(ctx context.Context, message string) er
 		text = string(runes[:telegramAPIMessageLimit-1]) + "…"
 	}
 
-	body, err := json.Marshal(telegramSendMessageRequest{
+	requestPayload := telegramSendMessageRequest{
 		ChatID:                chatID,
 		Text:                  text,
 		DisableWebPagePreview: true,
-	})
+	}
+	if parseMode := strings.TrimSpace(notifier.ParseMode); parseMode != "" {
+		requestPayload.ParseMode = parseMode
+	}
+	body, err := json.Marshal(requestPayload)
 	if err != nil {
 		return fmt.Errorf("telegram: marshal request: %w", err)
 	}

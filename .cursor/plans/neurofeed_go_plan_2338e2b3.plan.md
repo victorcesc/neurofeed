@@ -75,7 +75,7 @@ Phases below **merge** the roadmap in [docs/neurofeed.md](../../docs/neurofeed.m
 | **1 — MVP** | One path end-to-end | Telegram bot created; send one test message; fetch **one** RSS URL with gofeed; map to `Article`; send title + link to Telegram. Config via env (bot token, feed URL). |
 | **2 — Multiple sources** | Scale ingestion | Multiple feeds from config (YAML/JSON or env list) **each with a source tier** (`primary` / `expert` / `news` / `community` per [docs/neurofeed.md](../../docs/neurofeed.md)); map to `Article` including `SourceTier`; dedup by normalized title (lower, strip punctuation; optional hash later). |
 | **3 — AI integration** | Summaries | Split into **3.1–3.3** below (OpenAI HTTP + config; prompts and output shape; validation, caps, pipeline wiring). |
-| **4 — Message UX** | Readable digest | Categories, emojis, Markdown (or HTML) with Telegram-safe formatting; clickable links. |
+| **4 — Message UX** | Readable digest | **Shipped:** structured **`picks`** / **`sections[].picks`** (index + line1 + line2), assemble **Telegram HTML** (`parse_mode: HTML`), **HeadlineSummarizer** same layout; escape helpers in `notify`. |
 | **5 — Recipients & fixed subjects** | Multi-audience | Operator config: **subjects and RSS lists per recipient** (no in-Telegram topic picking); Telegram **receive-only**; map subjects → keyword/synonym lists for prompts/filtering; **fixed curated RSS URL lists per subject** (versioned config/code, no LLM for feed pick); **tier weight overrides**. |
 | **6 — Robustness** | Production habits | Retries with backoff for transient HTTP failures, structured logging (`log/slog`), request timeouts everywhere, simple TTL cache if needed to avoid duplicate API work. |
 
@@ -83,9 +83,9 @@ Phases below **merge** the roadmap in [docs/neurofeed.md](../../docs/neurofeed.m
 
 | Sub-step | Goal | Outcomes |
 |----------|------|----------|
-| **3.1** | HTTP + config | **Shipped:** `internal/ai.OpenAIChatClient`, `NEUROFEED_LLM_TIMEOUT`, defaults for base URL/model; `-llm-smoke` / `make llm-smoke` + `httptest` coverage. Env-backed OpenAI (or compatible): API key, model, optional base URL; `context` on requests; minimal `chat/completions` to prove I/O (digest wiring is 3.2–3.3). |
-| **3.2** | Prompts + output shape | Prompt text aligned with [docs/neurofeed.md](../../docs/neurofeed.md) for the daily digest; map `[]domain.Article` → request body; structured output (JSON mode or strict parse) so the pipeline gets a stable string (or intermediate struct) for formatting/notify. |
-| **3.3** | Validation + integration | Caps on articles/tokens per run (cost control from plan risks); simple heuristics or schema checks on model output; `Summarizer` implementation selected in `main`/config (e.g. OpenAI vs `HeadlineSummarizer` fallback); table-driven tests + `httptest` for the client. |
+| **3.1** | HTTP + config | **Shipped:** `internal/ai.OpenAIChatClient`, `NEUROFEED_LLM_TIMEOUT`, defaults for base URL/model; `-llm-smoke` / `make llm-smoke` + `httptest`. |
+| **3.2** | Prompts + output shape | **Shipped:** `DigestSummarizer` + spec-aligned system prompt; `json_object` + `{"digest":"..."}`; parse/fence-strip in `internal/ai`. |
+| **3.3** | Validation + integration | **Shipped:** `NEUROFEED_LLM_MAX_ARTICLES`, `NEUROFEED_LLM_MAX_OUTPUT_TOKENS`; OpenAI digest wired in `main` with `HeadlineSummarizer` fallback; `httptest` for client + summarizer. |
 
 **Go-specific emphasis across phases**
 

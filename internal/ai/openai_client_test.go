@@ -107,6 +107,47 @@ func TestOpenAIChatClientFromConfig_defaultsAndTrim(t *testing.T) {
 	}
 }
 
+func TestOpenAIChatClient_ChatCompletionWithOptions_jsonMode(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		body, err := io.ReadAll(request.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var decoded chatCompletionRequest
+		if err := json.Unmarshal(body, &decoded); err != nil {
+			t.Fatal(err)
+		}
+		if decoded.ResponseFormat == nil || decoded.ResponseFormat.Type != "json_object" {
+			t.Fatalf("response_format: %+v", decoded.ResponseFormat)
+		}
+		if decoded.MaxTokens != 999 {
+			t.Fatalf("max_tokens %d", decoded.MaxTokens)
+		}
+		_, _ = writer.Write([]byte(`{"choices":[{"message":{"role":"assistant","content":"{}"}}]}`))
+	}))
+	t.Cleanup(server.Close)
+
+	cfg := config.Config{
+		LLMBaseURL: strings.TrimSuffix(server.URL, "/") + "/v1",
+		LLMAPIKey:  "secret",
+		LLMModel:   "gpt-test",
+	}
+	client, err := NewOpenAIChatClientFromConfig(cfg, &http.Client{Timeout: 5 * time.Second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.ChatCompletionWithOptions(context.Background(), ChatCompletionInput{
+		Messages:         []ChatMessage{{Role: "user", Content: `Return JSON with key "digest"`}},
+		MaxTokens:        999,
+		JSONResponseMode: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestOpenAIChatClientFromConfig_errors(t *testing.T) {
 	t.Parallel()
 

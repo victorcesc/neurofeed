@@ -18,13 +18,24 @@ High-level status of roadmap phases ([product spec](docs/neurofeed.md), [enginee
 
 ## Phase 2 — Multiple sources
 
-**Done.** Multiple feeds via `NEUROFEED_RSS_FEEDS` (JSON) or legacy `RSS_FEED_URL` + optional `RSS_FEED_TIER`; each feed has a **source tier** (`primary` / `expert` / `news` / `community`) stamped on `Article.SourceTier`. `ingest.MultiRSSFetcher` aggregates feeds; `domain.DeduplicateArticlesByTitle` after fetch; pipeline orchestrates fetch → dedup → summarize → notify.
+**Done.** Multiple feeds via `NEUROFEED_RSS_FEEDS` (JSON) or legacy `RSS_FEED_URL` + optional `RSS_FEED_TIER`; each feed has a **source tier** (`primary` / `expert` / `news` / `community`) stamped on `Article.SourceTier`. `ingest.MultiRSSFetcher` aggregates feeds; **`NEUROFEED_RSS_ITEMS_PER_FEED`** (default **2**) keeps the **newest N items per feed URL** before merge; `domain.DeduplicateArticlesByTitle` after fetch; pipeline orchestrates fetch → dedup → summarize → notify.
 
 ---
 
-## Phase 3.1 — OpenAI HTTP client (smoke)
+## Phase 3 — AI digest (3.1–3.3)
 
-**Done.** `internal/ai.OpenAIChatClient` — OpenAI-compatible `POST …/chat/completions` with `context`, `Authorization: Bearer`, `User-Agent`. Config: `LLM_API_KEY`, `LLM_BASE_URL` (default `https://api.openai.com/v1`), `LLM_MODEL` (default `gpt-4o-mini`), `LLM_PROVIDER` (`openai` or empty for smoke), `NEUROFEED_LLM_TIMEOUT` (default `60s`) for the dedicated LLM HTTP client. CLI: **`go run ./cmd/neurofeed -llm-smoke`** or **`make llm-smoke`** validates I/O without running the RSS pipeline. Normal **`make run`** still uses `HeadlineSummarizer` until phase 3.3.
+**Done.**
+
+- **3.1** — `internal/ai.OpenAIChatClient`; env `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, `LLM_PROVIDER`, `NEUROFEED_LLM_TIMEOUT`; **`-llm-smoke`** / **`make llm-smoke`** for a minimal completion without RSS/Telegram.
+- **3.2** — `DigestSummarizer`: system prompt + numbered article batch; **`response_format: json_object`**; parse, optional markdown-fence strip (`internal/ai/digest_*.go`). **Phase 4** narrowed the schema to structured **`picks`** (flat) or **`sections[].picks`** (per subject) before Telegram send.
+- **3.3** — Env **`NEUROFEED_LLM_MAX_ARTICLES`** (default 12, max 40) and **`NEUROFEED_LLM_MAX_OUTPUT_TOKENS`** (default 2500, max 8192); **`make run`** uses **`DigestSummarizer`** when `LLM_API_KEY` is set and `LLM_PROVIDER` is empty or `openai`; otherwise **`HeadlineSummarizer`** (warn if provider is non-OpenAI). Extended run context deadline when the LLM path is active. **`httptest`** coverage for client JSON mode and digest summarizer.
+- **RSS `subject`** — Optional **`subject`** per feed in **`NEUROFEED_RSS_FEEDS`** (or **`RSS_FEED_SUBJECT`** for single-feed): stamped on **`Article.Subject`**; when any feed has a subject, the LLM digest is **sectioned** by subject. Items from feeds without `subject` bucket as **`Geral`**.
+
+---
+
+## Phase 4 — Telegram message UX (HTML digests)
+
+**Done.** Per **subject** (or implicit **`Geral`** when flat): up to **two** links per section, each with **two** summary lines (`line1` / `line2`) from the LLM JSON; **fallback** fills from the first articles with valid URLs if the model omits picks. **`internal/ai/digest_phase4.go`** assembles **Telegram HTML** (`<b>`, `🔗` + `<a href>`); **`notify.TelegramNotifier`** sends **`parse_mode: HTML`** (from `main`). **`HeadlineSummarizer`** uses the same layout without LLM lines (`notify.EscapeTelegramHTML` + escaped `href`). **`DigestSubjectSections`** (config feed order) plus **`EnrichSubjectOrderWithArticles`** and **`SubjectOrderedSummarizer`** ensure **every configured `subject`** appears each run (empty → placeholder). **`domain.BalanceArticlesAcrossSubjects`** round-robins the **`NEUROFEED_LLM_MAX_ARTICLES`** batch by subject so many AI feeds do not starve NBA/Tech/Futebol. Legacy `{"digest":"…"}` parser remains in **`parseDigestJSON`** for tests / compatibility only.
 
 ---
 
@@ -32,9 +43,6 @@ High-level status of roadmap phases ([product spec](docs/neurofeed.md), [enginee
 
 | Phase | Focus |
 |-------|--------|
-| **3.2** | Digest prompts from spec, article batch → request, structured / parseable model output |
-| **3.3** | Token/article caps, output validation, wire real `Summarizer` in pipeline + `httptest` coverage |
-| **4** | Telegram message UX: categories, emojis, Markdown, safe links |
 | **5** | Operator-defined recipients/subjects/feeds; Telegram receive-only; per-subject **fixed curated RSS lists** (no LLM feed discovery); tier overrides |
 | **6** | Retries/backoff, structured logging polish, caches, hardening |
 

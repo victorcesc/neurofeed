@@ -74,15 +74,18 @@ Required environment variables:
 
 - **Feeds** — either:
   - `RSS_FEED_URL` — one RSS or Atom URL; optional `RSS_FEED_TIER` (`primary`, `expert`, `news`, `community`; default `news`), or
-  - `NEUROFEED_RSS_FEEDS` — JSON array of `{"url":"...","tier":"..."}` (when set, this list is used and `RSS_FEED_URL` is ignored for ingestion).
+  - `NEUROFEED_RSS_FEEDS` — JSON array of `{"url":"...","tier":"..."}` and optional **`"subject":"…"`** (section label, up to 64 characters). When at least one feed has `subject`, the digest is grouped by those labels (`Geral` buckets items from feeds with no subject). For a single `RSS_FEED_URL`, optional **`RSS_FEED_SUBJECT`** does the same.
 - `TELEGRAM_BOT_TOKEN` — from BotFather.
 - `TELEGRAM_CHAT_ID` — where `sendMessage` should deliver (your user id, group id, or channel id; see below).
 
 Optional:
 
-- `LLM_*` — used by **`-llm-smoke`** (phase 3.1); the normal RSS → Telegram run still uses the headline summarizer until phase 3.3.
+- `LLM_*` — with **`LLM_API_KEY`** set and **`LLM_PROVIDER`** empty or **`openai`**, a normal **`make run`** uses the **OpenAI JSON digest** (`DigestSummarizer`, structured `picks` / `sections[].picks` → **Telegram HTML**). Without a key (or with a non-OpenAI provider), the run uses **`HeadlineSummarizer`** (same HTML layout, two links per subject when sectioned). The same variables power **`-llm-smoke`** (single ping, no RSS/Telegram).
+- `NEUROFEED_LLM_MAX_ARTICLES` — max articles sent to the model after dedup (default **12**, allowed **1–40**). When feeds use **`subject`**, the batch is built **round-robin by subject** so early feeds (e.g. many AI sources) do not fill the whole cap and hide NBA/Tech/etc.; raise the cap if you want more depth per topic.
+- `NEUROFEED_LLM_MAX_OUTPUT_TOKENS` — chat completion **max_tokens** for the digest (default **2500**, allowed **256–8192**).
+- `NEUROFEED_RSS_ITEMS_PER_FEED` — per **RSS URL**, keep only the **N** newest entries by publication date (default **2**, allowed **0–50**; **0** = no per-feed cap).
 
-When you run **`make run`** (without `-llm-smoke`), on success you should see structured logs on stderr including `step=pipeline_run_ok`. The bot will receive one plain-text message listing **article title and link** lines (deduplicated by normalized title across feeds; capped for size).
+When you run **`make run`** (without `-llm-smoke`), on success you should see structured logs on stderr including `step=pipeline_run_ok`. The bot receives one **`sendMessage`** payload with **`parse_mode: HTML`**: either an **LLM-filled digest** (when OpenAI is configured) or the **headline** path with the same section layout (up to **two** links per assunto, deduplicated upstream).
 
 ### LLM smoke (OpenAI HTTP, no RSS)
 
@@ -111,7 +114,7 @@ If configuration fails validation, the program logs an error and exits with code
 
 After that, `make run` with env set will POST to Telegram’s `sendMessage` and you should see the digest in that same chat.
 
-**How it works (short):** the binary fetches one or more feeds with `gofeed`, maps entries to `Article` (including `SourceTier` per feed), deduplicates by title, builds one plain-text block (title + URL per item), then calls the Telegram Bot API `sendMessage` for your `chat_id`. No LLM call yet.
+**How it works (short):** the binary fetches one or more feeds with `gofeed`, maps entries to `Article` (including `SourceTier` per feed), deduplicates by title, then either calls OpenAI for a **structured JSON digest** (assembled to **HTML** for Telegram) when `LLM_API_KEY` is configured for OpenAI, or builds the **same HTML layout** from titles/links without an LLM. Finally it calls the Telegram Bot API `sendMessage` (`parse_mode: HTML`) for your `chat_id`.
 
 ## Build a binary
 

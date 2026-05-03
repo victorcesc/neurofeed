@@ -26,6 +26,9 @@ func TestTelegramNotifier_Notify(t *testing.T) {
 		if payload["chat_id"] != "99" {
 			t.Fatalf("chat_id: %v", payload["chat_id"])
 		}
+		if _, has := payload["parse_mode"]; has {
+			t.Fatalf("expected no parse_mode by default, got %v", payload["parse_mode"])
+		}
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"ok":true}`))
 	}))

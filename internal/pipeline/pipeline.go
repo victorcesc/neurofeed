@@ -50,9 +50,17 @@ func (contentPipeline *Pipeline) Run(ctx context.Context) error {
 	articles = domain.DeduplicateArticlesByTitle(articles)
 	contentPipeline.log.Info("pipeline", "step", "dedup_done", "article_count", len(articles), "deduped_from", beforeDedup)
 
-	contentPipeline.log.Info("pipeline", "step", "summarize_start", "article_count", len(articles), "detail", "headline digest (no LLM yet)")
+	contentPipeline.log.Info("pipeline", "step", "summarize_start", "article_count", len(articles), "detail", "building digest text")
 
-	summary, err := contentPipeline.summarizer.Summarize(ctx, articles)
+	var summary string
+	if ordered, ok := contentPipeline.summarizer.(ai.SubjectOrderedSummarizer); ok &&
+		domain.HasAnyConfiguredSubject(articles) &&
+		len(contentPipeline.cfg.DigestSubjectSections()) > 0 {
+		sectionOrder := domain.EnrichSubjectOrderWithArticles(contentPipeline.cfg.DigestSubjectSections(), articles)
+		summary, err = ordered.SummarizeWithSubjectOrder(ctx, articles, sectionOrder)
+	} else {
+		summary, err = contentPipeline.summarizer.Summarize(ctx, articles)
+	}
 	if err != nil {
 		return fmt.Errorf("summarize: %w", err)
 	}

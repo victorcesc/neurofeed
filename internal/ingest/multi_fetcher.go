@@ -12,8 +12,11 @@ import (
 
 // RSSFeedSpec is one feed URL with its configured source tier for multi-feed ingestion.
 type RSSFeedSpec struct {
-	URL  string
-	Tier domain.SourceTier
+	URL     string
+	Tier    domain.SourceTier
+	Subject string
+	// MaxItemsPerFeed keeps the N newest items from this URL (0 = no cap). Sort uses Article.Published.
+	MaxItemsPerFeed int
 }
 
 // MultiRSSFetcher fetches several RSS URLs and concatenates articles. Partial failures are logged;
@@ -43,14 +46,16 @@ func (multiFetcher *MultiRSSFetcher) Fetch(ctx context.Context) ([]domain.Articl
 	for feedIndex := range multiFetcher.Feeds {
 		spec := multiFetcher.Feeds[feedIndex]
 		if multiFetcher.Log != nil {
-			multiFetcher.Log.Info("ingest", "step", "feed_fetch_start", "feed_index", feedIndex, "url", spec.URL, "tier", spec.Tier.String())
+			multiFetcher.Log.Info("ingest", "step", "feed_fetch_start", "feed_index", feedIndex, "url", spec.URL, "tier", spec.Tier.String(), "subject", spec.Subject)
 		}
 
 		singleFetcher := &RSSFetcher{
-			URL:         spec.URL,
-			Client:      multiFetcher.Client,
-			UserAgent:   multiFetcher.UserAgent,
-			DefaultTier: spec.Tier,
+			URL:             spec.URL,
+			Client:          multiFetcher.Client,
+			UserAgent:       multiFetcher.UserAgent,
+			DefaultTier:     spec.Tier,
+			Subject:         spec.Subject,
+			MaxItemsPerFeed: spec.MaxItemsPerFeed,
 		}
 		batch, err := singleFetcher.Fetch(ctx)
 		if err != nil {

@@ -60,15 +60,17 @@ Telegram Bot
 ### Fase 3 — Integração com IA (3.1 → 3.2 → 3.3)
 
 * [x] **3.1** — Cliente HTTP OpenAI (ou compatível), env (`LLM_API_KEY`, modelo, timeouts); chamada mínima com `context` para validar I/O (`-llm-smoke` / `make llm-smoke`)
-* [ ] **3.2** — Prompts do digest conforme spec; lote de artigos → pedido; saída estruturada / parseável para o pipeline
-* [ ] **3.3** — Limites de artigos/tokens, heurísticas de tamanho e clareza; `Summarizer` real na pipeline + testes (`httptest`)
+* [x] **3.2** — Prompts do digest (sistema + lote numerado); resposta **`json_object`** com campo `digest`; parse e validação em `internal/ai`
+* [x] **3.3** — `NEUROFEED_LLM_MAX_ARTICLES` / `NEUROFEED_LLM_MAX_OUTPUT_TOKENS`; `DigestSummarizer` na pipeline quando `LLM_API_KEY` + provider OpenAI; fallback para `HeadlineSummarizer` sem chave ou provider não suportado; testes `httptest`
 
 ### Fase 4 — UX da mensagem
 
-* [ ] Separar por categorias
-* [ ] Adicionar emojis
-* [ ] Formatação Markdown
-* [ ] Links clicáveis
+* [x] **Por assunto/categoria** (rótulo = `subject` do feed ou equivalente): para **cada** categoria, até **2 links** e, **por link**, **2 linhas** (`line1` / `line2` no JSON do modelo; preenchimento automático se faltar)
+* [x] Exemplo de leitura: secção **NBA** → link A + 2 linhas, link B + 2 linhas; secção **IA** → idem
+* [x] Cabeçalhos por categoria (`<b>📌 …</b>` em HTML Telegram)
+* [x] Emoji no título (`🧠 Resumo do dia`) e marcador de link (`🔗`)
+* [x] Formatação **HTML** (Telegram `parse_mode: HTML`; negrito + links)
+* [x] Links clicáveis com texto e atributos escapados (`notify.EscapeTelegramHTML` / `html.EscapeString` em `href`)
 
 ### Fase 5 — Destinatários e temas fixos (sem escolha no Telegram)
 
@@ -101,6 +103,7 @@ type Article struct {
     Description string
     Source      string
     SourceTier  SourceTier // ver Camadas de fontes (tiers)
+    Subject     string     // opcional: rótulo da secção vindo do JSON `subject` por feed em NEUROFEED_RSS_FEEDS (ou RSS_FEED_SUBJECT)
     Published   time.Time
 }
 ```
@@ -250,7 +253,31 @@ Dados:
 
 ## ✨ Formatação Final (Telegram)
 
-Exemplo:
+**Fase 4 (implementado):** o envio usa **Telegram HTML** (`parse_mode: HTML`): cabeçalhos em `<b>`, até **dois** `<a href="…">` por assunto com **duas** linhas de texto por link (vindas do LLM ou preenchimento local). Estrutura *legível* equivalente (Markdown de bolso):
+
+```
+🧠 *Resumo do dia*
+
+🏀 *NBA*
+🔗 https://…
+Linha 1: facto principal em linguagem simples.
+Linha 2: impacto ou “porque importa”.
+
+🔗 https://…
+Linha 1: …
+Linha 2: …
+
+🤖 *IA*
+🔗 https://…
+…
+…
+
+🔗 https://…
+…
+…
+```
+
+Exemplo legado (só referência editorial, não é o formato wire atual):
 
 ```
 🧠 *Resumo do dia*
