@@ -1,6 +1,6 @@
 # Neurofeed — workflows and procedures
 
-[Index of all docs](README.md). Short guide for humans and coding agents. Coding standards live in [RULES.md](RULES.md). Phase delivery status: [SUMMARY.md](../SUMMARY.md) (update when each phase ships).
+[Repository README / documentation index](../README.md). Short guide for humans and coding agents. Coding standards live in [RULES.md](RULES.md). Phase delivery status: [SUMMARY.md](../SUMMARY.md) (update when each phase ships).
 
 Step-by-step local run (prerequisites, `.env`, getting `TELEGRAM_CHAT_ID`): [HOW_TO_RUN.md](HOW_TO_RUN.md).
 
