@@ -1,16 +1,18 @@
-# Daily at 07:00 America/Sao_Paulo (BRT, UTC−3): runs neurofeed with .env, then with .env.vanessa.
-# Requires ./.env and ./.env.vanessa on the host.
+# Daily at 07:00 America/Sao_Paulo: runs /usr/local/bin/neurofeed (env from env_file, same as Railway UI).
+# Two services = two profiles; no bind-mounted .env files required.
 #
 # docker compose up -d
 #
-# One-off (same mounts):
-#   docker compose run --rm neurofeed-cron /usr/local/bin/run-daily.sh default
-#   docker compose run --rm neurofeed-cron /usr/local/bin/run-daily.sh vanessa
-#   docker compose run --rm neurofeed-cron /usr/local/bin/run-daily.sh   # both, same order as cron
+# One-off:
+#   docker compose run --rm neurofeed-default /usr/local/bin/neurofeed
+#   docker compose run --rm neurofeed-vanessa /usr/local/bin/neurofeed
 services:
-  neurofeed-cron:
+  neurofeed-default:
     build: .
     restart: unless-stopped
-    volumes:
-      - ./.env:/config/.env:ro
-      - ./.env.vanessa:/config/.env.vanessa:ro
+    env_file: .env
+
+  neurofeed-vanessa:
+    build: .
+    restart: unless-stopped
+    env_file: .env.vanessa
