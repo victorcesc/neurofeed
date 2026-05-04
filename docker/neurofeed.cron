@@ -1,0 +1,5 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+CRON_TZ=America/Sao_Paulo
+
+0 7 * * * root /usr/local/bin/run-daily.sh >> /proc/1/fd/1 2>&1

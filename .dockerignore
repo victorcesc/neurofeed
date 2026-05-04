@@ -1,0 +1,7 @@
+.git
+.cursor
+bin/
+*.md
+.env
+.env.*
+!.env.example
